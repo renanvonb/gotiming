@@ -1,0 +1,292 @@
+/* ============================================================
+   Ant Design — Colors & Type
+   Source of truth (read alongside README.md):
+   - components/theme/themes/seed.ts          (seed tokens)
+   - components/theme/themes/default/colors.ts (neutral derivation)
+   - @ant-design/colors                        (preset palettes)
+   antd derives everything from a small set of "seed" tokens.
+   This file exposes the V5 default-light tokens as CSS vars so
+   HTML mocks can use them directly.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* ------------------------------------------------------------
+     Font families
+     antd ships a *system font stack* — Inter is a stand-in for
+     visual fidelity in HTML mocks. Swap to the system stack in
+     production code.
+     ------------------------------------------------------------ */
+  --antd-font-family-system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --antd-font-family: "Inter", var(--antd-font-family-system);
+  --antd-font-family-code: "JetBrains Mono", "SFMono-Regular", Consolas,
+    "Liberation Mono", Menlo, Courier, monospace;
+
+  /* ------------------------------------------------------------
+     Font sizes & line heights (default theme)
+     fontSize seed = 14
+     ------------------------------------------------------------ */
+  --antd-font-size-sm: 12px;
+  --antd-font-size: 14px;          /* body default */
+  --antd-font-size-lg: 16px;
+  --antd-font-size-xl: 20px;
+
+  --antd-font-size-heading-1: 38px;
+  --antd-font-size-heading-2: 30px;
+  --antd-font-size-heading-3: 24px;
+  --antd-font-size-heading-4: 20px;
+  --antd-font-size-heading-5: 16px;
+
+  --antd-line-height-sm: 1.66;
+  --antd-line-height: 1.5715;
+  --antd-line-height-lg: 1.5;
+
+  --antd-line-height-heading-1: 1.21;
+  --antd-line-height-heading-2: 1.27;
+  --antd-line-height-heading-3: 1.33;
+  --antd-line-height-heading-4: 1.4;
+  --antd-line-height-heading-5: 1.5;
+
+  /* ------------------------------------------------------------
+     Brand & semantic seed colors
+     ------------------------------------------------------------ */
+  --antd-color-primary: #1677ff;
+  --antd-color-success: #52c41a;
+  --antd-color-warning: #faad14;
+  --antd-color-error:   #ff4d4f;
+  --antd-color-info:    #1677ff;
+  --antd-color-link:    #1677ff;
+
+  /* ------------------------------------------------------------
+     Primary palette (derived from #1677ff — 1=lightest → 10=darkest)
+     These match @ant-design/colors generate('#1677FF')
+     ------------------------------------------------------------ */
+  --antd-blue-1:  #e6f4ff;
+  --antd-blue-2:  #bae0ff;
+  --antd-blue-3:  #91caff;
+  --antd-blue-4:  #69b1ff;
+  --antd-blue-5:  #4096ff;
+  --antd-blue-6:  #1677ff;   /* base */
+  --antd-blue-7:  #0958d9;
+  --antd-blue-8:  #003eb3;
+  --antd-blue-9:  #002c8c;
+  --antd-blue-10: #001d66;
+
+  /* ------------------------------------------------------------
+     Primary-derived semantic tokens (used by Buttons, Tags, etc.)
+     index → token mapping:
+       1 → Bg, 2 → BgHover, 3 → Border, 4 → BorderHover,
+       5 → Hover, 6 → base, 7 → Active,
+       8 → TextHover, 9 → Text, 10 → TextActive
+     ------------------------------------------------------------ */
+  --antd-color-primary-bg:           var(--antd-blue-1);
+  --antd-color-primary-bg-hover:     var(--antd-blue-2);
+  --antd-color-primary-border:       var(--antd-blue-3);
+  --antd-color-primary-border-hover: var(--antd-blue-4);
+  --antd-color-primary-hover:        var(--antd-blue-5);
+  --antd-color-primary-active:       var(--antd-blue-7);
+  --antd-color-primary-text-hover:   var(--antd-blue-5);
+  --antd-color-primary-text:         var(--antd-blue-6);
+  --antd-color-primary-text-active:  var(--antd-blue-7);
+
+  /* ------------------------------------------------------------
+     Preset palettes (@ant-design/colors) — base shade only.
+     Full 10-step versions of each live in the colors_palettes.css
+     preview card. Use these for Tags / Badges / data-viz.
+     ------------------------------------------------------------ */
+  --antd-purple:   #722ed1;
+  --antd-cyan:     #13c2c2;
+  --antd-green:    #52c41a;
+  --antd-magenta:  #eb2f96;
+  --antd-red:      #f5222d;
+  --antd-orange:   #fa8c16;
+  --antd-yellow:   #fadb14;
+  --antd-volcano:  #fa541c;
+  --antd-geekblue: #2f54eb;
+  --antd-lime:     #a0d911;
+  --antd-gold:     #faad14;
+
+  /* ------------------------------------------------------------
+     Neutral tokens (default light theme)
+     Derived via getAlphaColor(#000, n) on white background.
+     ------------------------------------------------------------ */
+  --antd-color-text:            rgba(0, 0, 0, 0.88);  /* primary text */
+  --antd-color-text-secondary:  rgba(0, 0, 0, 0.65);  /* labels */
+  --antd-color-text-tertiary:   rgba(0, 0, 0, 0.45);  /* descriptions */
+  --antd-color-text-quaternary: rgba(0, 0, 0, 0.25);  /* placeholders */
+
+  --antd-color-fill:            rgba(0, 0, 0, 0.15);
+  --antd-color-fill-secondary:  rgba(0, 0, 0, 0.06);
+  --antd-color-fill-tertiary:   rgba(0, 0, 0, 0.04);
+  --antd-color-fill-quaternary: rgba(0, 0, 0, 0.02);
+
+  --antd-color-bg-layout:    #f5f5f5;  /* page background */
+  --antd-color-bg-container: #ffffff;  /* surface */
+  --antd-color-bg-elevated:  #ffffff;  /* popovers, modals */
+  --antd-color-bg-spotlight: rgba(0, 0, 0, 0.85); /* tooltip bg */
+  --antd-color-bg-mask:      rgba(0, 0, 0, 0.45); /* modal mask */
+  --antd-color-bg-solid:     #000000;
+
+  --antd-color-border:           #d9d9d9;
+  --antd-color-border-secondary: #f0f0f0;
+
+  --antd-color-white: #ffffff;
+
+  /* ------------------------------------------------------------
+     Border radius (seed=6 → derived scale)
+     ------------------------------------------------------------ */
+  --antd-border-radius-xs: 2px;
+  --antd-border-radius-sm: 4px;
+  --antd-border-radius:    6px;
+  --antd-border-radius-lg: 8px;
+  --antd-border-radius-outer: 4px;
+
+  /* ------------------------------------------------------------
+     Line, shadow, spacing
+     ------------------------------------------------------------ */
+  --antd-line-width: 1px;
+  --antd-line-width-bold: 2px;
+
+  --antd-box-shadow: 0 6px 16px 0 rgba(0,0,0,0.08),
+                     0 3px 6px -4px rgba(0,0,0,0.12),
+                     0 9px 28px 8px rgba(0,0,0,0.05);
+  --antd-box-shadow-secondary: 0 6px 16px 0 rgba(0,0,0,0.08),
+                               0 3px 6px -4px rgba(0,0,0,0.12),
+                               0 9px 28px 8px rgba(0,0,0,0.05);
+  --antd-box-shadow-tertiary: 0 1px 2px 0 rgba(0,0,0,0.03),
+                              0 1px 6px -1px rgba(0,0,0,0.02),
+                              0 2px 4px 0 rgba(0,0,0,0.02);
+
+  /* size step (Ant uses 4px base) */
+  --antd-size-unit: 4px;
+  --antd-size-xxs: 4px;
+  --antd-size-xs:  8px;
+  --antd-size-sm:  12px;
+  --antd-size:     16px;
+  --antd-size-md:  20px;
+  --antd-size-lg:  24px;
+  --antd-size-xl:  32px;
+  --antd-size-xxl: 48px;
+
+  --antd-padding-xxs: 4px;
+  --antd-padding-xs:  8px;
+  --antd-padding-sm:  12px;
+  --antd-padding:     16px;
+  --antd-padding-md:  20px;
+  --antd-padding-lg:  24px;
+  --antd-padding-xl:  32px;
+
+  /* Control heights (Input, Button, Select) */
+  --antd-control-height-sm: 24px;
+  --antd-control-height:    32px;
+  --antd-control-height-lg: 40px;
+  --antd-control-height-xl: 48px;
+
+  /* Motion */
+  --antd-motion-duration-fast: 0.1s;
+  --antd-motion-duration-mid:  0.2s;
+  --antd-motion-duration-slow: 0.3s;
+  --antd-motion-ease-out:      cubic-bezier(0.215, 0.61, 0.355, 1);
+  --antd-motion-ease-in-out:   cubic-bezier(0.645, 0.045, 0.355, 1);
+  --antd-motion-ease-out-back: cubic-bezier(0.12, 0.4, 0.29, 1.46);
+  --antd-motion-ease-out-circ: cubic-bezier(0.08, 0.82, 0.17, 1);
+
+  /* z-index */
+  --antd-z-popup-base: 1000;
+}
+
+/* Optional dark theme — toggle with [data-theme="dark"] on <html> */
+[data-theme="dark"] {
+  --antd-color-bg-layout:    #000000;
+  --antd-color-bg-container: #141414;
+  --antd-color-bg-elevated:  #1f1f1f;
+  --antd-color-bg-spotlight: #424242;
+  --antd-color-bg-mask:      rgba(0, 0, 0, 0.45);
+
+  --antd-color-text:            rgba(255, 255, 255, 0.85);
+  --antd-color-text-secondary:  rgba(255, 255, 255, 0.65);
+  --antd-color-text-tertiary:   rgba(255, 255, 255, 0.45);
+  --antd-color-text-quaternary: rgba(255, 255, 255, 0.25);
+
+  --antd-color-border:           #424242;
+  --antd-color-border-secondary: #303030;
+}
+
+/* ============================================================
+   Semantic typography classes — use these in mocks.
+   ============================================================ */
+
+html, body {
+  font-family: var(--antd-font-family);
+  font-size: var(--antd-font-size);
+  line-height: var(--antd-line-height);
+  color: var(--antd-color-text);
+  background: var(--antd-color-bg-container);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, .antd-h1 {
+  font-size: var(--antd-font-size-heading-1);
+  line-height: var(--antd-line-height-heading-1);
+  font-weight: 600;
+  color: var(--antd-color-text);
+  margin: 0 0 0.5em;
+}
+h2, .antd-h2 {
+  font-size: var(--antd-font-size-heading-2);
+  line-height: var(--antd-line-height-heading-2);
+  font-weight: 600;
+  color: var(--antd-color-text);
+  margin: 0 0 0.5em;
+}
+h3, .antd-h3 {
+  font-size: var(--antd-font-size-heading-3);
+  line-height: var(--antd-line-height-heading-3);
+  font-weight: 600;
+  color: var(--antd-color-text);
+  margin: 0 0 0.5em;
+}
+h4, .antd-h4 {
+  font-size: var(--antd-font-size-heading-4);
+  line-height: var(--antd-line-height-heading-4);
+  font-weight: 600;
+  color: var(--antd-color-text);
+  margin: 0 0 0.5em;
+}
+h5, .antd-h5 {
+  font-size: var(--antd-font-size-heading-5);
+  line-height: var(--antd-line-height-heading-5);
+  font-weight: 600;
+  color: var(--antd-color-text);
+  margin: 0 0 0.5em;
+}
+
+p, .antd-text {
+  font-size: var(--antd-font-size);
+  line-height: var(--antd-line-height);
+  color: var(--antd-color-text);
+  margin: 0 0 1em;
+}
+.antd-text-secondary { color: var(--antd-color-text-secondary); }
+.antd-text-tertiary  { color: var(--antd-color-text-tertiary); }
+.antd-text-disabled  { color: var(--antd-color-text-quaternary); }
+
+a, .antd-link {
+  color: var(--antd-color-link);
+  text-decoration: none;
+  transition: color var(--antd-motion-duration-mid) var(--antd-motion-ease-in-out);
+}
+a:hover, .antd-link:hover { color: var(--antd-color-primary-hover); }
+a:active, .antd-link:active { color: var(--antd-color-primary-active); }
+
+code, kbd, pre, samp, .antd-code {
+  font-family: var(--antd-font-family-code);
+  font-size: 0.92em;
+  background: var(--antd-color-fill-tertiary);
+  padding: 0.1em 0.4em;
+  border-radius: var(--antd-border-radius-sm);
+}

@@ -1,0 +1,4802 @@
+/* ==========================================================================
+   Gotime — Scaffold padrão de tela (Goapice)
+   ==========================================================================
+   - Sidebar preta fixa à esquerda (56px)
+   - Header no topo da área de conteúdo
+   - Espaçamentos da área de conteúdo: topo 64 · esq 72 · dir 24 · base 24
+   - 4 divisões de bloco (A/B/C/D) selecionáveis via Tweaks
+   ========================================================================== */
+
+:root {
+  --goapice-brand-blue: #1375FA;
+  --goapice-brand-navy: #001B61;
+
+  --sidebar-width: 56px;
+  --content-pad-top: 0px;
+  --content-pad-left: 24px;
+  --content-pad-right: 24px;
+  --content-pad-bottom: 24px;
+
+  --side-block-width: 261px;
+  --block-gap: 0px;
+  --header-height: 64px;
+}
+
+/* Dark-mode overrides for tokens the design system leaves to alpha-on-white
+   (fills become invisible on dark surfaces otherwise). */
+[data-theme="dark"] {
+  --antd-color-fill:            rgba(255, 255, 255, 0.18);
+  --antd-color-fill-secondary:  rgba(255, 255, 255, 0.12);
+  --antd-color-fill-tertiary:   rgba(255, 255, 255, 0.08);
+  --antd-color-fill-quaternary: rgba(255, 255, 255, 0.04);
+}
+
+/* Gotime semantic colors layered on top of the antd palette. */
+:root {
+  --gt-trabalha-bg: rgba(22, 119, 255, 0.08);   /* blue-6 tint */
+  --gt-trabalha-fg: #0958d9;                    /* blue-7 */
+  --gt-trabalha-bg-hover: rgba(22, 119, 255, 0.16);
+  --gt-intervalo-bg: rgba(250, 173, 20, 0.10);  /* gold-6 tint */
+  --gt-intervalo-fg: #d48806;                   /* gold-7 */
+  --gt-intervalo-bg-hover: rgba(250, 173, 20, 0.20);
+
+  /* Shared list metrics — both the Colaboradores panel and the Timeline
+     panel use these so their rows align horizontally across the split. */
+  --gt-top-h: 100px;   /* header-zone height before the list begins */
+  --gt-row-h: 64px;    /* per-row height */
+  --gt-footer-h: 44px; /* footer height (12 top + content + 12 bottom) */
+}
+[data-theme="dark"] {
+  --gt-trabalha-bg: rgba(22, 119, 255, 0.14);
+  --gt-trabalha-fg: var(--antd-blue-4);
+  --gt-trabalha-bg-hover: rgba(22, 119, 255, 0.24);
+  --gt-intervalo-bg: rgba(250, 173, 20, 0.14);
+  --gt-intervalo-fg: #fadb14;
+  --gt-intervalo-bg-hover: rgba(250, 173, 20, 0.24);
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--antd-font-family);
+  font-size: var(--antd-font-size);
+  line-height: var(--antd-line-height);
+  color: var(--antd-color-text);
+  background: var(--antd-color-bg-container);
+  -webkit-font-smoothing: antialiased;
+}
+
+* { box-sizing: border-box; }
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* ----------------------------------------------------------------------------
+   App shell
+---------------------------------------------------------------------------- */
+.gt-app {
+  height: 100vh;
+  display: flex;
+  background: var(--antd-color-bg-container);
+  overflow: hidden;
+}
+
+/* ----------------------------------------------------------------------------
+   Sidebar (preta, fixa)
+---------------------------------------------------------------------------- */
+.gt-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: var(--sidebar-width);
+  background: #000;
+  color: rgba(255, 255, 255, 0.65);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 100;
+  padding: 16px 0;
+  gap: 12px;
+}
+
+.gt-sidebar__logo {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+}
+.gt-sidebar__logo svg { width: 20px; height: auto; display: block; }
+
+.gt-sidebar__group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.gt-sidebar__divider {
+  width: 20px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.18);
+  flex: none;
+}
+
+.gt-sidebar__spacer { flex: 1; }
+
+.gt-sidebar__btn {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 0;
+  color: rgba(255, 255, 255, 0.65);
+  border-radius: 6px;
+  transition: background var(--antd-motion-duration-fast),
+              color var(--antd-motion-duration-fast);
+}
+.gt-sidebar__btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+.gt-sidebar__btn.is-active {
+  color: var(--goapice-brand-blue);
+  background: rgba(19, 117, 250, 0.12);
+}
+.gt-sidebar__avatar.is-active {
+  outline: 2px solid var(--goapice-brand-blue);
+  outline-offset: 2px;
+}
+.gt-sidebar__btn svg { width: 20px; height: 20px; display: block; }
+
+.gt-sidebar__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #bfbfbf; /* gray-6 */
+  color: #ffffff; /* gray-1 */
+  display: grid;
+  place-items: center;
+  border: 0;
+  cursor: pointer;
+  padding: 0;
+  margin-top: 12px; /* +12px on top of group's 12px gap = 24px from previous icon */
+}
+.gt-sidebar__avatar svg { width: 18px; height: 18px; display: block; }
+
+/* ----------------------------------------------------------------------------
+   Main wrapper (everything to the right of the sidebar)
+---------------------------------------------------------------------------- */
+.gt-main {
+  flex: 1;
+  margin-left: var(--sidebar-width);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+/* ----------------------------------------------------------------------------
+   Header
+---------------------------------------------------------------------------- */
+.gt-header {
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--content-pad-right) 0 var(--content-pad-left);
+  background: var(--antd-color-bg-container);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.gt-header__left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.gt-header__back {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  border-radius: 6px;
+  color: var(--antd-color-text-secondary);
+  margin-left: -6px;
+}
+.gt-header__back:hover { background: var(--antd-color-fill-tertiary); }
+.gt-header__back svg { width: 18px; height: 18px; }
+
+.gt-header__module-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(19, 117, 250, 0.10);
+  color: var(--goapice-brand-blue);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.gt-header__module-icon svg { width: 16px; height: 16px; }
+
+.gt-header__title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--antd-color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+.gt-header__title-edit,
+.gt-header__fav {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--antd-color-text-tertiary);
+  border-radius: 6px;
+  transition: color var(--antd-motion-duration-fast),
+              background var(--antd-motion-duration-fast);
+}
+.gt-header__title-edit:hover,
+.gt-header__fav:hover {
+  background: var(--antd-color-fill-tertiary);
+  color: var(--antd-color-text-secondary);
+}
+.gt-header__title-edit svg,
+.gt-header__fav svg { width: 16px; height: 16px; }
+.gt-header__fav.is-active { color: var(--antd-gold); }
+.gt-header__fav.is-active svg { fill: var(--antd-gold); }
+
+.gt-header__right {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* espaçamento entre actions */
+  flex: 0 0 auto;
+}
+
+.gt-header__context {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  font-size: var(--antd-font-size);
+  color: var(--antd-color-text-secondary);
+  margin-right: 8px;
+}
+.gt-header__context-item {
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.gt-header__context-item svg {
+  width: 16px;
+  height: 16px;
+  color: var(--antd-color-text-tertiary);
+  flex: none;
+}
+
+/* Inline rename input — sits in place of the title <span> */
+.gt-header__title--input {
+  font: inherit;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--antd-color-text);
+  background: var(--antd-color-bg-container);
+  border: 1px solid var(--antd-color-primary);
+  border-radius: var(--antd-border-radius);
+  padding: 0 8px;
+  height: 32px;
+  outline: 0;
+  margin: -4px 0;
+  min-width: 200px;
+}
+.gt-header__title--input:focus {
+  box-shadow: 0 0 0 2px var(--antd-color-primary-bg);
+}
+/* (Context labels removed — now using icons inside .gt-header__context-item) */
+
+/* On narrow viewports, hide the contextual info to keep header readable. */
+@media (max-width: 1279px) {
+  .gt-header__context { display: none; }
+}
+
+/* ----------------------------------------------------------------------------
+   Buttons (mirror AntD basic)
+---------------------------------------------------------------------------- */
+.gt-btn {
+  height: 32px;
+  padding: 0 15px;
+  border-radius: var(--antd-border-radius);
+  font-size: var(--antd-font-size);
+  font-weight: 400;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all var(--antd-motion-duration-fast) var(--antd-motion-ease-out);
+  border: 1px solid var(--antd-color-border);
+  background: var(--antd-color-bg-container);
+  color: var(--antd-color-text);
+  white-space: nowrap;
+}
+.gt-btn:hover {
+  border-color: var(--antd-color-primary-hover);
+  color: var(--antd-color-primary-hover);
+}
+.gt-btn:disabled,
+.gt-btn[disabled] {
+  cursor: not-allowed;
+  color: var(--antd-color-text-quaternary);
+  background: var(--antd-color-fill-tertiary);
+  border-color: var(--antd-color-border);
+}
+.gt-btn:disabled:hover,
+.gt-btn[disabled]:hover {
+  color: var(--antd-color-text-quaternary);
+  border-color: var(--antd-color-border);
+}
+.gt-btn--primary {
+  background: var(--antd-color-primary);
+  border-color: var(--antd-color-primary);
+  color: #fff;
+}
+.gt-btn--primary:hover {
+  background: var(--antd-color-primary-hover);
+  border-color: var(--antd-color-primary-hover);
+  color: #fff;
+}
+.gt-btn--danger {
+  color: var(--antd-color-error);
+  border-color: var(--antd-color-error);
+  background: var(--antd-color-bg-container);
+}
+.gt-btn--danger:hover {
+  color: var(--antd-color-error);
+  border-color: var(--antd-color-error);
+}
+.gt-btn--text {
+  border-color: transparent;
+  background: transparent;
+}
+.gt-btn--text:hover {
+  background: var(--antd-color-fill-tertiary);
+  color: var(--antd-color-text);
+  border-color: transparent;
+}
+.gt-btn svg { width: 14px; height: 14px; }
+.gt-btn--dashed { border-style: dashed; }
+.gt-btn--block { width: 100%; justify-content: center; }
+
+/* ============================================================================
+   Popconfirm — anchored confirmation popup
+   ========================================================================= */
+.gt-popconfirm {
+  position: fixed;
+  z-index: 1500;
+  min-width: 240px;
+  max-width: 320px;
+  background: var(--antd-color-bg-elevated);
+  border: 1px solid var(--antd-color-border-secondary);
+  border-radius: var(--antd-border-radius-lg);
+  box-shadow: var(--antd-box-shadow);
+  padding: 12px 16px 12px 12px;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity var(--antd-motion-duration-mid) var(--antd-motion-ease-out),
+              transform var(--antd-motion-duration-mid) var(--antd-motion-ease-out);
+}
+.gt-popconfirm.is-visible { opacity: 1; transform: translateY(0); }
+.gt-popconfirm__head { display: flex; gap: 8px; align-items: flex-start; }
+.gt-popconfirm__icon { color: #faad14; flex: none; margin-top: 2px; }
+.gt-popconfirm__body { flex: 1; min-width: 0; }
+.gt-popconfirm__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--antd-color-text);
+  margin-bottom: 4px;
+}
+.gt-popconfirm__content {
+  font-size: 13px;
+  color: var(--antd-color-text-secondary);
+  line-height: 1.4;
+}
+.gt-popconfirm__foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* Icon-only square button (32x32) */
+.gt-btn--icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+}
+.gt-btn--icon-danger { color: var(--antd-color-error); }
+.gt-btn--icon-danger:hover {
+  color: var(--antd-color-error-hover);
+  border-color: var(--antd-color-error-hover);
+}
+
+/* ----------------------------------------------------------------------------
+   Content area — wraps with the spec spacings
+---------------------------------------------------------------------------- */
+.gt-content {
+  flex: 1;
+  padding: var(--content-pad-top) var(--content-pad-right)
+          var(--content-pad-bottom) var(--content-pad-left);
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Block layouts ------------------------------------------------------------- */
+.gt-blocks {
+  display: grid;
+  gap: var(--block-gap);
+  height: 100%;
+  min-height: 0;
+}
+
+.gt-blocks--A { grid-template-columns: 1fr; }
+.gt-blocks--B { grid-template-columns: var(--side-block-width) 1fr; }
+.gt-blocks--C { grid-template-columns: var(--side-block-width) 1fr var(--side-block-width); }
+.gt-blocks--D {
+  /* glued, resizable — handled by JS */
+  grid-template-columns: var(--d-left, 320px) 6px 1fr;
+  gap: 0;
+}
+
+/* Shared-border treatment for any multi-block layout (gap: 0) -------------- */
+.gt-blocks > .gt-block + .gt-block { border-left: 0; }
+.gt-blocks:not(.gt-blocks--A) > .gt-block:not(:first-child):not(:last-child) {
+  border-radius: 0;
+}
+.gt-blocks:not(.gt-blocks--A) > .gt-block:first-child {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.gt-blocks:not(.gt-blocks--A) > .gt-block:last-child {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.gt-block {
+  background: var(--antd-color-bg-container);
+  border: 1px solid var(--antd-color-border-secondary);
+  border-radius: 4px;
+  padding: 16px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.gt-blocks--D .gt-block {
+  border-radius: 0;
+  border-left: 1px solid var(--antd-color-border-secondary);
+}
+.gt-blocks--D .gt-block:first-child {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+  border-right: 0;
+}
+.gt-blocks--D .gt-block:last-child {
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+  border-left: 0;
+}
+
+.gt-resize-handle {
+  background: var(--antd-color-border-secondary);
+  cursor: col-resize;
+  position: relative;
+  border-top: 1px solid var(--antd-color-border-secondary);
+  border-bottom: 1px solid var(--antd-color-border-secondary);
+  transition: background var(--antd-motion-duration-fast);
+}
+.gt-resize-handle:hover,
+.gt-resize-handle.is-active {
+  background: var(--antd-color-primary);
+}
+.gt-resize-handle::after {
+  content: "";
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  width: 2px;
+  height: 24px;
+  background: var(--antd-color-text-quaternary);
+  border-radius: 1px;
+}
+.gt-resize-handle:hover::after,
+.gt-resize-handle.is-active::after { background: #fff; }
+
+/* Splitter (Gotrade-style) — visible 1px line, thickens to 2px primary on
+   hover/drag; tooltip appears after 1s hover delay; double-click resets. */
+.gt-splitter {
+  width: 6px;
+  flex-shrink: 0;
+  background: transparent;
+  cursor: col-resize;
+  position: relative;
+  margin: 0 -3px;
+  z-index: 5;
+}
+.gt-splitter::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: var(--gt-footer-h);  /* stop at the footer top so the footer row is continuous */
+  width: 1px;
+  background: var(--antd-color-border-secondary);
+  transform: translateX(-50%);
+  transition: background var(--antd-motion-duration-mid) var(--antd-motion-ease-out),
+              width var(--antd-motion-duration-fast);
+}
+.gt-splitter:hover::after,
+.gt-splitter.is-dragging::after {
+  background: var(--antd-color-primary);
+  width: 2px;
+}
+.gt-splitter-tip {
+  position: absolute;
+  left: 50%;
+  top: var(--tip-y, 50%);
+  transform: translate(-50%, calc(-100% - 12px));
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 400;
+  padding: 5px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--antd-motion-duration-mid) var(--antd-motion-ease-out);
+  transition-delay: 0s;
+  z-index: 100;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+.gt-splitter:hover .gt-splitter-tip {
+  opacity: 1;
+  transition-delay: 1s;
+}
+.gt-splitter.is-dragging .gt-splitter-tip { opacity: 0; transition-delay: 0s; }
+
+/* Layout B with splitter — flexbox so width can transition on dbl-click reset */
+.gt-blocks--B {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  grid-template-columns: none;
+}
+.gt-pane-left,
+.gt-pane-right {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+}
+.gt-pane-left {
+  flex: 0 0 261px;
+  width: 261px;
+}
+.gt-pane-left.is-animating {
+  transition: width 320ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.gt-pane-right { flex: 1 1 auto; }
+.gt-pane-left > .gt-block,
+.gt-pane-right > .gt-block { flex: 1; min-width: 0; }
+/* Strip the inner borders so the splitter line is the only divider */
+.gt-pane-left > .gt-block {
+  border-right: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.gt-pane-right > .gt-block {
+  border-left: 0;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+/* Collapsed rail (replaces the left block when collapsed) ------------------ */
+.gt-rail {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 0;
+  gap: 8px;
+  cursor: pointer;
+  background: var(--antd-color-bg-container);
+  border: 1px solid var(--antd-color-border-secondary);
+  border-right: 0;
+  border-radius: 4px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  transition: background var(--antd-motion-duration-mid) var(--antd-motion-ease-out);
+}
+.gt-rail:hover { background: var(--antd-color-fill-quaternary); }
+.gt-rail__btn {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--antd-color-text-secondary);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background var(--antd-motion-duration-fast),
+              color var(--antd-motion-duration-fast);
+}
+.gt-rail__btn:hover {
+  background: var(--antd-color-fill-tertiary);
+  color: var(--antd-color-text);
+}
+.gt-rail__btn svg { width: 18px; height: 18px; }
+.gt-rail__title {
+  writing-mode: vertical-rl;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--antd-color-text);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  margin-top: 4px;
+}
+
+/* Block "placeholder" content (for empty scaffolds) */
+.gt-block__label {
+  font-size: var(--antd-font-size-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--antd-color-text-tertiary);
+  margin-bottom: 12px;
+}
+.gt-block__title {
+  font-size: var(--antd-font-size-lg);
+  font-weight: 600;
+  color: var(--antd-color-text);
+  margin: 0 0 4px;
+}
+.gt-block__hint {
+  color: var(--antd-color-text-tertiary);
+  font-size: var(--antd-font-size);
+  margin: 0;
+}
+
+.gt-block__placeholder {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  color: var(--antd-color-text-quaternary);
+  font-size: var(--antd-font-size);
+  text-align: center;
+  background:
+    repeating-linear-gradient(45deg,
+      transparent 0 12px,
+      rgba(0, 0, 0, 0.02) 12px 13px);
+  border-radius: 4px;
+  border: 1px dashed var(--antd-color-border);
+  min-height: 200px;
+  padding: 24px;
+}
+
+/* ----------------------------------------------------------------------------
+   Spacing guides overlay
+---------------------------------------------------------------------------- */
+.gt-guides {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 30;
+}
+.gt-guides__line {
+  position: absolute;
+  background: rgba(255, 77, 79, 0.5);
+}
+.gt-guides__line--h { height: 1px; left: 0; right: 0; }
+.gt-guides__line--v { width: 1px; top: 0; bottom: 0; }
+
+.gt-guides__chip {
+  position: absolute;
+  background: var(--antd-color-error);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: var(--antd-font-family);
+  line-height: 1.4;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Spacing overlay variant attached to the whole page */
+.gt-app[data-guides="1"] .gt-content { outline: 1px solid rgba(22, 119, 255, 0.4); outline-offset: -1px; }
+.gt-app[data-guides="1"] .gt-header { outline: 1px solid rgba(22, 119, 255, 0.4); outline-offset: -1px; }
+.gt-app[data-guides="1"] .gt-sidebar { outline: 1px solid rgba(22, 119, 255, 0.6); outline-offset: -1px; }
+
+/* ----------------------------------------------------------------------------
+   Misc helpers
+---------------------------------------------------------------------------- */
+.gt-divider-v {
+  width: 1px;
+  background: var(--antd-color-border-secondary);
+  margin: 0 4px;
+  height: 20px;
+}
+
+.gt-input {
+  height: 32px;
+  border: 1px solid var(--antd-color-border);
+  border-radius: var(--antd-border-radius);
+  padding: 0 11px;
+  font-size: var(--antd-font-size);
+  font-family: inherit;
+  color: var(--antd-color-text);
+  background: var(--antd-color-bg-container);
+  transition: all var(--antd-motion-duration-fast);
+  outline: 0;
+  width: 100%;
+}
+.gt-input:focus {
+  border-color: var(--antd-color-primary);
+  box-shadow: 0 0 0 2px var(--antd-color-primary-bg);
+}
+.gt-input::placeholder { color: var(--antd-color-text-quaternary); }
+
+.gt-search {
+  position: relative;
+}
+.gt-search svg {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  color: var(--antd-color-text-tertiary);
+}
+.gt-search .gt-input { padding-left: 32px; }
+
+/* ============================================================================
+   Parâmetros area — sections + fields
+   ========================================================================= */
+.cfg__params {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+  min-height: 0;
+}
+.cfg__params-grid {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+  overflow-x: auto;
+}
+.cfg__params-section {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--antd-color-border-secondary);
+  border-radius: var(--antd-border-radius);
+  background: var(--antd-color-bg-container);
+  flex: 1 1 0;
+  min-width: 220px;
+  overflow: hidden;
+  transition: flex var(--antd-motion-duration-mid) var(--antd-motion-ease-out),
+              min-width var(--antd-motion-duration-mid) var(--antd-motion-ease-out);
+}
+
+/* Collapsed horizontally → 56px rail with vertical title (same as Unidades) */
+.cfg__params-section.is-collapsed {
+  flex: 0 0 56px;
+  min-width: 56px;
+  cursor: pointer;
+}
+.cfg__params-section.is-collapsed .cfg__params-head {
+  flex-direction: column-reverse;
+  padding: 16px 0;
+  gap: 12px;
+  background: transparent;
+  border-bottom: 0;
+  align-items: center;
+  justify-content: flex-start;
+  flex: none;
+}
+.cfg__params-section.is-collapsed .cfg__params-title {
+  writing-mode: vertical-rl;
+  text-align: left;
+  flex: none;
+}
+.cfg__params-section.is-collapsed .cfg__params-collapse {
+  transform: rotate(180deg);
+  width: 24px;
+  height: 24px;
+}
+.cfg__params-section.is-collapsed .cfg__params-body { display: none; }
+
+.cfg__params-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #fafafa;
+  border-bottom: 1px solid var(--antd-color-border-secondary);
+}
+[data-theme="dark"] .cfg__params-head { background: rgba(255, 255, 255, 0.04); }
+.cfg__params-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--antd-color-text);
+  flex: 1;
+}
+.cfg__params-collapse {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--antd-color-text-secondary);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background var(--antd-motion-duration-fast),
+              transform var(--antd-motion-duration-mid) var(--antd-motion-ease-in-out);
+}
+.cfg__params-collapse svg { width: 18px; height: 18px; }
+.cfg__params-collapse:hover { background: transparent; color: var(--antd-color-text); }
+.cfg__params-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.cfg__params-section.is-collapsed .cfg__params-body { display: none; }
+.cfg__params-section:last-of-type { border-bottom: 0; padding-bottom: 0; }
+.cfg__params-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--antd-color-text);
+}
+.cfg__params-subsection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--antd-color-border-secondary);
+}
+.cfg__params-subsection:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+.cfg__params-subtitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--antd-color-text);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.cfg__params-info {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  color: var(--antd-color-text-tertiary);
+  cursor: help;
+  transition: color var(--antd-motion-duration-fast);
+}
+.cfg__params-info:hover { color: var(--antd-color-primary); }
+.cfg__params-field { display: flex; flex-direction: column; gap: 6px; }
+.cfg__params-label { font-size: 13px; color: var(--antd-color-text); }
+.cfg__params-hint {
+  margin: -4px 0 0;
+  font-size: 12px;
+  color: var(--antd-color-text-tertiary);
+}
+.cfg__params-stack { display: flex; flex-direction: column; gap: 8px; }
+.cfg__params-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cfg__params-grid2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.cfg__params-grid3 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+.cfg__params-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+}
+
+.cfg__params-statgrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.cfg__params-statcard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 12px 8px;
+  border: 1px solid var(--antd-color-border-secondary);
+  border-radius: var(--antd-border-radius);
+  background: var(--antd-color-bg-container);
+  min-width: 0;
+}
+.cfg__params-statcard__value {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--antd-color-text);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+.cfg__params-statcard__value--blue    { color: var(--antd-color-primary); }
+.cfg__params-statcard__value--gold    { color: #d48806; }
+.cfg__params-statcard__value--magenta { color: #c41d7f; }
+.cfg__params-statcard__label {
+  font-size: 12px;
+  color: var(--antd-color-text-tertiary);
+}
+.cfg__params-stat { display: flex; flex-direction: column; gap: 4px; }
+.cfg__params-stat__label { font-size: 12px; color: var(--antd-color-text-tertiary); }
+.cfg__params-stat__value {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--antd-color-text);
+  font-variant-numeric: tabular-nums;
+}
+.cfg__params-stat__value--blue { color: var(--antd-color-primary); }
+.cfg__params-stat__value--gold { color: #d48806; }
+.cfg__params-stat__value--magenta { color: #c41d7f; }
+
+.cfg__params-history {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.cfg__params-history__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--antd-color-border-secondary);
+  font-size: 13px;
+  min-width: 0;
+}
+.cfg__params-history__item:last-child { border-bottom: 0; }
+.cfg__params-history__icon { color: var(--antd-color-text-tertiary); flex: 0 0 16px; }
+.cfg__params-history__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.cfg__params-history__name {
+  color: var(--antd-color-text);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.cfg__params-history__meta {
+  color: var(--antd-color-text-tertiary);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cfg__params-history__actions {
+  display: flex;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+.cfg__params-history__actions .gt-btn-link {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.cfg__params-foot {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 8px;
+}
+
+/* RadioGroup (AntD Radio) */
+.gt-radio-group { display: inline-flex; gap: 16px; }
+.gt-radio-group--vertical { flex-direction: column; gap: 8px; }
+.gt-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--antd-color-text);
+  position: relative;
+}
+.gt-radio__native {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.gt-radio__dot {
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--antd-color-border);
+  border-radius: 50%;
+  background: var(--antd-color-bg-container);
+  position: relative;
+  transition: border-color var(--antd-motion-duration-fast);
+  flex: none;
+}
+.gt-radio:hover .gt-radio__dot { border-color: var(--antd-color-primary); }
+.gt-radio__dot::after {
+  content: "";
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: 8px;
+  height: 8px;
+  background: var(--antd-color-primary);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  transition: transform var(--antd-motion-duration-mid) var(--antd-motion-ease-in-out),
+              opacity var(--antd-motion-duration-mid) var(--antd-motion-ease-in-out);
+}
+.gt-radio__native:checked + .gt-radio__dot {
+  border-color: var(--antd-color-primary);
+}
+.gt-radio__native:checked + .gt-radio__dot::after {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+}
+
+/* ============================================================================
+   Tweaks panel (theme toggle)
+   ========================================================================= */
+.gt-tweaks { position: fixed; right: 16px; top: 16px; z-index: 1200; }
+.gt-tweaks--sidebar { position: static; }
+.gt-tweaks--sidebar .gt-tweaks__panel {
+  position: fixed;
+  width: 260px;
+  background: var(--antd-color-bg-elevated);
+  border: 1px solid var(--antd-color-border-secondary);
+  border-radius: var(--antd-border-radius-lg);
+  box-shadow: var(--antd-box-shadow);
+  overflow: hidden;
+  z-index: 1300;
+  transform-origin: bottom left;
+}
+.gt-tweaks--sidebar .gt-tweaks__panel:not([hidden]) {
+  animation: gtPopIn var(--antd-motion-duration-mid) var(--antd-motion-ease-out);
+}
+.gt-tweaks__toggle {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--antd-color-bg-elevated);
+  border: 1px solid var(--antd-color-border-secondary);
+  box-shadow: var(--antd-box-shadow);
+  display: grid; place-items: center;
+  color: var(--antd-color-text-secondary);
+  cursor: pointer;
+  transition: color var(--antd-motion-duration-fast),
+              background var(--antd-motion-duration-fast);
+}
+.gt-tweaks__toggle:hover { color: var(--antd-color-primary); }
+.gt-tweaks__panel {
+  position: absolute;
+  right: 0; top: 48px;
+  width: 260px;
+  background: var(--antd-color-bg-elevated);
+  border: 1px solid var(--antd-color-border-secondary);
+  border-radius: var(--antd-border-radius-lg);
+  box-shadow: var(--antd-box-shadow);
+  overflow: hidden;
+  transform-origin: top right;
+}
+.gt-tweaks__panel:not([hidden]) {
+  animation: gtPopIn var(--antd-motion-duration-mid) var(--antd-motion-ease-out);
+}
+
+/* Holiday import list */
+.cfg__feriado-import-desc {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--antd-color-text-secondary);
+  line-height: 1.5;
+}
+.cfg__feriado-import-yearnav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 0;
+  margin-bottom: 12px;
+}
+.cfg__feriado-import-year {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--antd-color-text);
+  min-width: 56px;
+  text-align: center;
+}
+.cfg__feriado-import-allrow {
+  display: flex;
+  align-items: center;
+  padding: 12px 0;
+  border-top: 1px solid var(--antd-color-border-secondary);
+  border-bottom: 1px solid var(--antd-color-border-secondary);
+  font-weight: 600;
+  margin-bottom: 0;
+}
+.cfg__feriado-import-allrow__label { flex: 1; font-size: 14px; color: var(--antd-color-text); }
+.cfg__feriado-import-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.cfg__feriado-import-toolbar > .gt-search { flex: 1; min-width: 0; }
+.cfg__feriado-import-toolbar > .gt-datepicker--year {
+  width: 80px !important;
+  min-width: 80px !important;
+  flex: 0 0 80px;
+}
+.gt-datepicker--year {
+  min-width: 80px;
+  width: 80px;
+  height: 32px;
+}
+.gt-datepicker-pop--year { width: auto; padding: 12px; }
+.gt-datepicker-pop__years {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+.gt-datepicker-pop__yearcell {
+  height: 40px;
+  padding: 0 16px;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  color: var(--antd-color-text);
+  background: transparent;
+  border: 0;
+  border-radius: var(--antd-border-radius);
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  transition: background var(--antd-motion-duration-fast),
+              color var(--antd-motion-duration-fast);
+}
+.gt-datepicker-pop__yearcell:hover { background: var(--antd-color-fill-tertiary); }
+.gt-datepicker-pop__yearcell.is-selected {
+  background: var(--antd-color-primary);
+  color: #fff;
+}
+.gt-datepicker-pop__yearcell.is-selected:hover { background: var(--antd-color-primary-hover); }
+.gt-datepicker-pop__yearcell.is-outside { color: var(--antd-color-text-quaternary); }
+.gt-datepicker-pop__yearcell.is-disabled,
+.gt-datepicker-pop__yearcell[disabled] {
+  color: var(--antd-color-text-quaternary);
+  cursor: not-allowed;
+  background: transparent;
+  opacity: 0.6;
+}
+.gt-datepicker-pop__yearcell.is-disabled:hover { background: transparent; }
+.gt-datepicker-pop__nav[disabled] {
+  color: var(--antd-color-text-quaternary);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.gt-datepicker-pop__nav[disabled]:hover { background: transparent; color: var(--antd-color-text-quaternary); }
+.cfg__feriado-import-yearpicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  padding: 0 4px;
+  border: 1px solid var(--antd-color-border);
+  border-radius: var(--antd-border-radius);
+  background: var(--antd-color-bg-container);
+}
+.cfg__feriado-import-yearpicker__btn {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--antd-color-text-secondary);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.cfg__feriado-import-yearpicker__btn:hover { color: var(--antd-color-primary); }
+.cfg__feriado-import-yearpicker__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--antd-color-text);
+  font-variant-numeric: tabular-nums;
+  min-width: 36px;
+  text-align: center;
+}
+
+.cfg__feriado-import-item__info { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cfg__feriado-import-item__sub {
+  font-size: 12px;
+  color: var(--antd-color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+#feriadoImportDrawer .gt-drawer__body {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+#feriadoImportDrawer .cfg__feriado-import-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  scrollbar-width: none;
+}
+#feriadoImportDrawer .cfg__feriado-import-list::-webkit-scrollbar { width: 0; display: none; }
+#feriadoImportDrawer .cfg__feriado-import-allrow,
+#feriadoImportDrawer .cfg__feriado-import-toolbar,
+#feriadoImportDrawer .cfg__feriado-import-desc { flex: 0 0 auto; }
+.cfg__feriado-import-list {
+  display: flex;
+  flex-direction: column;
+}
+.cfg__feriado-import-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0;
+  margin: 0;
+  border-bottom: 1px solid var(--antd-color-border-secondary);
+  cursor: pointer;
+  transition: background var(--antd-motion-duration-fast);
+}
+.cfg__feriado-import-item:hover { background: #fafafa; }
+[data-theme="dark"] .cfg__feriado-import-item:hover { background: rgba(255, 255, 255, 0.04); }
+.cfg__feriado-import-item:has(input[type="checkbox"]:checked) .cfg__feriado-import-item__name {
+  color: #0958d9;
+  font-weight: 500;
+}
+[data-theme="dark"] .cfg__feriado-import-item:has(input[type="checkbox"]:checked) .cfg__feriado-import-item__name {
+  color: #69b1ff;
+}
+.cfg__feriado-import-item:last-child { border-bottom: 0; }
+.cfg__feriado-import-item__name {
+  font-size: 14px;
+  color: var(--antd-color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cfg__feriado-import-item__date {
+  font-size: 13px;
+  color: var(--antd-color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+.cfg__feriado-import-item__info { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cfg__feriado-import-item__sub {
+  font-size: 12px;
+  color: var(--antd-color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+.cfg__feriado-import-item__kind {
+  font-size: 11px;
+  color: var(--antd-color-text-tertiary);
+  background: var(--antd-color-fill-tertiary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+.gt-tweaks__head {
+  display: flex; align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--antd-color-border-secondary);
+}
+.gt-tweaks__title { flex: 1; font-size: 14px; font-weight: 600; color: var(--antd-color-text); }
+.gt-tweaks__close {
+  width: 24px; height: 24px;
+  display: grid; place-items: center;
+  border: 0; background: transparent;
+  color: var(--antd-color-text-secondary);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.gt-tweaks__close:hover { background: var(--antd-color-fill-tertiary); }
+.gt-tweaks__body { padding: 16px; }
+.gt-tweaks__row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.gt-tweaks__row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.gt-tweaks__row:last-child { margin-bottom: 0; }
+.gt-tweaks__row .gt-seg { width: 100%; }
+.gt-tweaks__row .gt-seg__btn { flex: 1; }
+.gt-tweaks__label {
+  font-size: 13px;
+  color: var(--antd-color-text);
+  font-weight: 500;
+}
+
+/* Empty state — AntD Empty (simple) inside a full-bleed dashed container */
+.gt-empty-state {
+  flex: 1;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 48px;
+  border: 1px dashed var(--antd-color-border);
+  border-radius: var(--antd-border-radius);
+  color: var(--antd-color-text-tertiary);
+  text-align: center;
+}
+.gt-empty-state .gt-empty__img { opacity: 0.85; margin-bottom: 24px; }
+.gt-empty__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--antd-color-text);
+}
+.gt-empty__desc {
+  margin: 0;
+  font-size: 14px;
+  color: var(--antd-color-text-tertiary);
+}
+[data-theme="dark"] .gt-empty-state {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* ============================================================================
+   Date range picker — faithful AntD RangePicker recreation.
+   Two inputs separated by a swap-right arrow, calendar suffix, animated
+   underline that follows the focused input.
+   ========================================================================= */
+.gt-daterange {
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 11px;
+  border: 1px solid var(--antd-color-border);
+  background: var(--antd-color-bg-container);
+  border-radius: var(--antd-border-radius);
+  font-size: 14px;
+  color: var(--antd-color-text);
+  transition: border-color var(--antd-motion-duration-fast),
+              box-shadow var(--antd-motion-duration-fast);
+  position: relative;
+}
+.gt-daterange:hover { border-color: var(--antd-color-primary); }
+.gt-daterange:focus-within {
+  border-color: var(--antd-color-primary);
+  box-shadow: 0 0 0 2px var(--antd-color-primary-bg);
+}
+.gt-daterange__input {
+  width: 96px;
+  height: 30px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: inherit;
+  color: var(--antd-color-text);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  padding: 0;
+}
+.gt-daterange__input::placeholder { color: var(--antd-color-text-quaternary); }
+.gt-daterange__sep {
+  color: var(--antd-color-text-tertiary);
+  display: inline-flex;
+  align-items: center;
+  padding: 0 4px;
+}
+.gt-daterange__sep svg { width: 14px; height: 14px; }
+.gt-daterange__suffix {
+  margin-left: 8px;
+  color: var(--antd-color-text-quaternary);
+  display: inline-flex;
+  align-items: center;
+}
+.gt-daterange__suffix svg { width: 14px; height: 14px; }
+
+/* Animated underline that follows the focused input (AntD pattern) */
+.gt-daterange__active {
+  position: absolute;
+  bottom: -1px;
+  height: 2px;
+  width: 96px;
+  background: var(--antd-color-primary);
+  border-radius: 2px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(11px);
+  transition: transform var(--antd-motion-duration-mid) var(--antd-motion-ease-out),
+              opacity var(--antd-motion-duration-fast);
+}
+.gt-daterange.is-focus-end .gt-daterange__active { transform: translateX(133px); }
+.gt-daterange:focus-within .gt-daterange__active { opacity: 1; }
+
+/* ============================================================================
+   Table — AntD-style data table (medium size by default).
+   Fixed row height + single-line ellipsis on every cell, matching AntD's
+   `ellipsis: true` column behaviour from the docs.
+   ========================================================================= */
+.gt-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--antd-color-bg-container);
+  font-size: 14px;
+  line-height: 1.5715;
+}
+.gt-table tbody td { font-size: 14px; }
+.gt-table thead th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--antd-color-text);
+  background: #fafafa;
+  height: 48px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--antd-color-border-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
+}
+[data-theme="dark"] .gt-table thead th {
+  background: rgba(255, 255, 255, 0.04);
+}
+.gt-table tbody td {
+  height: 56px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--antd-color-border-secondary);
+  color: var(--antd-color-text);
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
+  max-width: 0; /* enables ellipsis when combined with width on col */
+}
+.gt-table tbody tr:last-child td { border-bottom: 0; }
+.gt-table tbody tr {
+  transition: background var(--antd-motion-duration-fast);
+}
+.gt-table tbody tr:hover td { background: var(--antd-color-fill-quaternary); }
+
+/* Disabled row (e.g. colaborador inativo para escala) */
+.gt-table tbody tr.is-disabled td {
+  color: var(--antd-color-text-quaternary);
+}
+.gt-table tbody tr.is-disabled td .gt-user-cell__avatar {
+  filter: grayscale(1);
+  opacity: 0.6;
+}
+.gt-table tbody tr.is-disabled td .gt-tag {
+  filter: grayscale(1);
+  opacity: 0.65;
+}
+
+/* Horizontal scroll wrapper */
+.gt-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* PDV area's table-wrap fills the vertical space inside cfg__content */
+.cfg__pdv .gt-table-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid var(--antd-color-border-secondary);
+  border-radius: 4px;
+}
+.cfg__pdv .gt-table-wrap .gt-table {
+  border: 0;
+  border-radius: 0;
+  table-layout: fixed;
+}
+/* Ensure the last row keeps its bottom border (overrides the global rule) */
+.cfg__pdv .gt-table tbody tr:last-child td {
+  border-bottom: 1px solid var(--antd-color-border-secondary);
+}
+
+/* ============================================================================
+   Modal — AntD basic Modal (https://ant.design/components/modal)
+   ========================================================================= */
+.gt-modal-mask {
+  position: fixed;
+  inset: 0;
+  background: var(--antd-color-bg-mask);
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--antd-motion-duration-mid) var(--antd-motion-ease-out),
+              visibility var(--antd-motion-duration-mid) var(--antd-motion-ease-out);
+}
+.gt-modal-mask.is-open { opacity: 1; visibility: visible; }
+
+.gt-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 520px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
+  background: var(--antd-color-bg-elevated);
+  border-radius: var(--antd-border-radius-lg);
+  box-shadow: var(--antd-box-shadow);
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  transform: translate(-50%, -50%) scale(0.2);
+  opacity: 0;
+  visibility: hidden;
+  transition: transform var(--antd-motion-duration-mid) var(--antd-motion-ease-out-circ),
+              opacity var(--antd-motion-duration-mid) var(--antd-motion-ease-out-circ),
+              visibility var(--antd-motion-duration-mid) var(--antd-motion-ease-out-circ);
+}
+.gt-modal.is-open {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+  visibility: visible;
+}
+.gt-modal__head {
+  padding: 20px 24px 16px;
+}
+.gt-modal__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--antd-color-text);
+  line-height: 24px;
+}
+.gt-modal__close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--antd-color-text-tertiary);
+  border-radius: var(--antd-border-radius);
+  cursor: pointer;
+  transition: background var(--antd-motion-duration-fast),
+              color var(--antd-motion-duration-fast);
+}
+.gt-modal__close:hover {
+  background: var(--antd-color-fill-tertiary);
+  color: var(--antd-color-text);
+}
+.gt-modal__body {
+  flex: 1;
+  overflow: auto;
+  padding: 0 24px 12px;
+  color: var(--antd-color-text);
+}
+.gt-modal__foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px 20px;
+}
+.gt-modal__foot-spacer { flex: 1; }
+.gt-modal__hint {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--antd-color-text-tertiary);
+}
+
+/* Dropzone — AntD Upload.Dragger pattern */
+.gt-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 32px 16px;
+  border: 1px dashed var(--antd-color-border);
+  border-radius: var(--antd-border-radius);
+  background: var(--antd-color-fill-quaternary);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color var(--antd-motion-duration-fast),
+              background var(--antd-motion-duration-fast);
+}
+.gt-dropzone:hover,
+.gt-dropzone.is-dragover {
+  border-color: var(--antd-color-primary);
+  background: var(--antd-color-primary-bg);
+}
+.gt-dropzone.has-file {
+  border-color: var(--antd-color-success);
+  background: rgba(82, 196, 26, 0.06);
+}
+.gt-dropzone__icon {
+  color: var(--antd-color-primary);
+  margin-bottom: 4px;
+}
+.gt-dropzone__title {
+  margin: 0;
+  font-size: 14px;
+  color: var(--antd-color-text);
+  font-weight: 500;
+}
+.gt-dropzone__hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--antd-color-text-tertiary);
+}
+
+/* Link-style button */
+.gt-btn-link {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  color: var(--antd-color-primary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color var(--antd-motion-duration-fast);
+}
+.gt-btn-link:hover { color: var(--antd-color-primary-hover); }
+.gt-btn-link svg { width: 14px; height: 14px; }
+/* Danger variant of link button */
+.gt-btn-link--danger { color: var(--antd-color-error); }
+.gt-btn-link--danger:hover { color: var(--antd-color-error-hover, #ff7875); }
+
+/* Drawer foot spacer — pushes adjacent buttons apart */
+.gt-drawer__foot-spacer { flex: 1; }
+
+/* Confirm modal variant — narrower, with icon + text layout */
+.gt-modal--confirm {
+  width: 416px;
+}
+.gt-confirm__body {
+  display: flex;
+  gap: 16px;
+  padding: 32px 32px 24px;
+}
+.gt-confirm__icon {
+  flex: none;
+  color: var(--antd-color-warning);
+  margin-top: 2px;
+}
+.gt-confirm__text { flex: 1; }
+.gt-confirm__title {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--antd-color-text);
+}
+.gt-confirm__msg {
+  margin: 0;
+  font-size: 14px;
+  color: var(--antd-color-text-secondary);
+}
+.gt-confirm__foot {
+  padding: 0 32px 24px;
+  justify-content: flex-end;
+}
+
+/* ============================================================================
+   Right drawer (AntD Drawer placement="right")
+   ========================================================================= */
+.gt-drawer-mask {
+  position: fixed;
+  inset: 0;
+  background: var(--antd-color-bg-mask);
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--antd-motion-duration-mid) var(--antd-motion-ease-out),
+              visibility var(--antd-motion-duration-mid) var(--antd-motion-ease-out);
+}
+.gt-drawer-mask.is-open { opacity: 1; visibility: visible; }
+
+.gt-drawer {
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  width: 420px;
+  max-width: 100vw;
+  background: var(--antd-color-bg-container);
+  box-shadow: -6px 0 16px 0 rgba(0, 0, 0, 0.08), -3px 0 6px -4px rgba(0, 0, 0, 0.12), -9px 0 28px 8px rgba(0, 0, 0, 0.05);
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  visibility: hidden;
+  transition: transform var(--antd-motion-duration-slow) var(--antd-motion-ease-out),
+              visibility var(--antd-motion-duration-slow) var(--antd-motion-ease-out);
+}
+.gt-drawer.is-open {
+  transform: translateX(0);
+  visibility: visible;
+}
+
+.gt-drawer__head {
+  height: 56px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--antd-color-border-secondary);
+}
+.gt-drawer__title {
+  flex: 1;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--antd-color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gt-drawer__close {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--antd-color-text-secondary);
+  border-radius: var(--antd-border-radius);
+  cursor: pointer;
+  transition: background var(--antd-motion-duration-fast);
+}
+.gt-drawer__close:hover { background: var(--antd-color-fill-tertiary); color: var(--antd-color-text); }
+.gt-drawer__close svg { width: 14px; height: 14px; }
+
+.gt-drawer__body {
+  flex: 1;
+  overflow: auto;
+  padding: 24px;
+}
+.gt-drawer__foot {
+  height: 56px;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  padding: 0 24px;
+  border-top: 1px solid var(--antd-color-border-secondary);
+}
+
+/* TimePicker (single time field — used in feriados drawer) */
+.gt-timepicker {
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+  height: 32px;
+  padding: 0 11px;
+  border: 1px solid var(--antd-color-border);
+  background: var(--antd-color-bg-container);
+  border-radius: var(--antd-border-radius);
+  font: inherit;
+  font-size: 14px;
+  color: var(--antd-color-text);
+  cursor: pointer;
+  transition: border-color var(--antd-motion-duration-fast),
+              box-shadow var(--antd-motion-duration-fast);
+}
+.gt-timepicker:hover:not(.is-disabled) { border-color: var(--antd-color-primary); }
+.gt-timepicker.is-disabled,
+.gt-timepicker[disabled] {
+  background: var(--antd-color-fill-tertiary);
+  color: var(--antd-color-text-quaternary);
+  cursor: not-allowed;
+}
+.gt-timepicker__input {
+  flex: 1;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+.gt-timepicker__suffix {
+  display: inline-flex;
+  align-items: center;
+  color: var(--antd-color-text-quaternary);
+  margin-left: 8px;
+}
+.gt-timepicker__suffix svg { width: 14px; height: 14px; }
+
+/* Required-field asterisk — AntD shows it BEFORE the label text in red */
+.gt-form__required {
+  color: var(--antd-color-error);
+  margin-right: 4px;
+  font-family: SimSun, sans-serif;
+}
+
+/* Checkbox — AntD Checkbox (animated check) */
+.gt-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--antd-color-text);
+  user-select: none;
+  line-height: 1;
+  position: relative;
+}
+.gt-checkbox__native {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 16px;
+  height: 16px;
+}
+.gt-checkbox__box {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--antd-color-border);
+  border-radius: var(--antd-border-radius-sm);
+  background: var(--antd-color-bg-container);
+  transition: background var(--antd-motion-duration-fast) var(--antd-motion-ease-in-out),
+              border-color var(--antd-motion-duration-fast) var(--antd-motion-ease-in-out);
+  flex: none;
+}
+.gt-checkbox:hover .gt-checkbox__box { border-color: var(--antd-color-primary); }
+.gt-checkbox__box::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5.71px;
+  height: 9.14px;
+  border: 2px solid #fff;
+  border-top: 0;
+  border-left: 0;
+  transform: translate(-50%, -55%) rotate(45deg) scale(0);
+  opacity: 0;
+  transition: transform var(--antd-motion-duration-mid) var(--antd-motion-ease-in-out),
+              opacity var(--antd-motion-duration-mid) var(--antd-motion-ease-in-out);
+}
+.gt-checkbox__native:checked + .gt-checkbox__box {
+  background: var(--antd-color-primary);
+  border-color: var(--antd-color-primary);
+}
+.gt-checkbox__native:checked + .gt-checkbox__box::after {
+  transform: translate(-50%, -55%) rotate(45deg) scale(1);
+  opacity: 1;
+}
+.gt-checkbox__native:focus-visible + .gt-checkbox__box {
+  box-shadow: 0 0 0 2px var(--antd-color-primary-bg);
+}
+.gt-checkbox__label { line-height: 1.5; }
+
+/* Legacy checkbox row — kept for back-compat */
+.gt-form__check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--antd-color-text);
+  cursor: pointer;
+}
+.gt-form__check input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--antd-color-primary);
+  cursor: pointer;
+}
+.gt-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.gt-form__row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.gt-form__row--inline {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+.gt-form__label {
+  font-size: 13px;
+  color: var(--antd-color-text);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Help icon next to a form label — opens tooltip with the field's description */
+.gt-form__help {
+  display: inline-grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  color: var(--antd-color-text-quaternary);
+  cursor: help;
+  transition: color var(--antd-motion-duration-fast);
+}
+.gt-form__help:hover { color: var(--antd-color-text-tertiary); }
+.gt-form__help svg { display: block; }
+
+/* Two form fields side-by-side */
+.gt-form__row-inline {
+  display: flex;
+  gap: 12px;
+}
+
+/* Divider between form sections inside the drawer */
+.gt-form__divider {
+  height: 1px;
+  background: var(--antd-color-border-secondary);
+  margin: 0;
+}
+/* When the divider is a direct child of the drawer body (between the colab
+   card and the form), give it 16px breathing room below. */
+.gt-drawer__body > .gt-form__divider {
+  margin-bottom: 16px;
+}
+
+/* InputNumber — AntD InputNumber */
+.gt-input-number {
+  position: relative;
+  display: block;
+}
+.gt-input-number__input {
+  padding-right: 24px;
+  -moz-appearance: textfield;
+}
+.gt-input-number__input::-webkit-outer-spin-button,
+.gt-input-number__input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.gt-input-number__handlers {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  bottom: 1px;
+  width: 22px;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--antd-color-border-secondary);
+  background: var(--antd-color-bg-container);
+  border-radius: 0 var(--antd-border-radius) var(--antd-border-radius) 0;
+  opacity: 0;
+  transition: opacity var(--antd-motion-duration-fast);
+}
+.gt-input-number:hover .gt-input-number__handlers,
+.gt-input-number:focus-within .gt-input-number__handlers {
+  opacity: 1;
+}
+.gt-input-number__step {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  color: var(--antd-color-text-tertiary);
+  padding: 0;
+  transition: color var(--antd-motion-duration-fast),
+              background var(--antd-motion-duration-fast);
+}
+.gt-input-number__step:first-child { border-bottom: 1px solid var(--antd-color-border-secondary); }
+.gt-input-number__step:hover {
+  background: var(--antd-color-fill-tertiary);
+  color: var(--antd-color-primary);
+}
+.gt-input-number__step svg { display: block; }
+.gt-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--antd-border-radius);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.gt-alert--info {
+  background: var(--antd-color-primary-bg);
+  border: 1px solid var(--antd-color-primary-border);
+  color: var(--antd-color-text);
+}
+.gt-alert__icon {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  color: var(--antd-color-primary);
+  margin-top: 2px;
+}
+.gt-alert__msg { flex: 1; }
+
+/* Message (AntD-style toast) — stacks at the top-center of the viewport */
+.gt-message {
+  position: fixed;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+.gt-message__item {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  background: var(--antd-color-bg-elevated);
+  color: var(--antd-color-text);
+  border-radius: var(--antd-border-radius-lg);
+  box-shadow: var(--antd-box-shadow);
+  font-size: 14px;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity var(--antd-motion-duration-mid) var(--antd-motion-ease-out),
+              transform var(--antd-motion-duration-mid) var(--antd-motion-ease-out);
+}
+.gt-message__item.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.gt-message__icon {
+  display: inline-grid;
+  place-items: center;
+}
+.gt-message__item--success .gt-message__icon { color: var(--antd-color-success); }
+.gt-message__item--info    .gt-message__icon { color: var(--antd-color-primary); }
+.gt-message__item--warning .gt-message__icon { color: #faad14; }
+.gt-message__item--error   .gt-message__icon { color: var(--antd-color-error); }
+.gt-message__item--loading .gt-message__icon { color: var(--antd-color-primary); }
+.gt-spin { animation: gtSpin 1s linear infinite; transform-origin: 50% 50%; }
+@keyframes gtSpin { to { transform: rotate(360deg); } }
+.gt-form select.gt-input {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23999' d='M6 8 0 0h12z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+/* User cell with avatar — used in Lista de escalas and Colaboradores tables */
+.gt-user-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  min-width: 0;
+}
+.gt-user-cell > span:not(.gt-user-cell__avatar) {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color var(--antd-motion-duration-fast);
+}
+.cfg__colab tbody tr:not(.is-disabled) td:first-child:hover .gt-user-cell > span:not(.gt-user-cell__avatar) {
+  color: var(--antd-color-primary);
+}
+.gt-user-cell__avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex: none;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-transform: uppercase;
+}
+
+/* DatePicker trigger */
+.gt-datepicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: var(--antd-border-radius);
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  color: var(--antd-color-text);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background var(--antd-motion-duration-fast),
+              border-color var(--antd-motion-duration-fast);
+}
+.gt-datepicker:hover {
+  border-color: var(--antd-color-primary);
+  background: var(--antd-color-bg-container);
+}
+.gt-datepicker svg {
+  width: 14px;
+  height: 14px;
+  color: var(--antd-color-text-tertiary);
+}
+.gt-datepicker:hover svg { color: var(--antd-color-primary); }
+
+/* DatePicker used inside a form field — full width, bordered like an input */
+.gt-datepicker--field {
+  width: 100%;
+  justify-content: space-between;
+  height: 32px;
+  padding: 0 11px;
+  border: 1px solid var(--antd-color-border);
+  background: var(--antd-color-bg-container);
+}
+.gt-datepicker--field:hover {
+  border-color: var(--antd-color-primary);
+  background: var(--antd-color-bg-container);
+}
+
+/* Collaborator card displayed at top of drawer body */
+.gt-colab-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.gt-user-cell__avatar--lg {
+  width: 40px;
+  height: 40px;
+  font-size: 14px;
+}
+.gt-colab-card__info { display: flex; flex-direction: column; gap: 4px; }
+.gt-colab-card__name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--antd-color-text);
+}
+.gt-colab-card__meta {
+  font-size: 13px;
+  color: var(--antd-color-text-tertiary);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.gt-colab-card__sep { color: var(--antd-color-text-quaternary); }
+.gt-colab-card__vdiv {
+  display: inline-block;
+  width: 1px;
+  height: 14px;
+  background: var(--antd-color-border);
+  align-self: center;
+}
+
+/* DatePicker popover */
+.gt-datepicker-pop {
+  position: fixed;
+  z-index: 1100;
+  background: var(--antd-color-bg-elevated);
+  border-radius: var(--antd-border-radius-lg);
+  box-shadow: var(--antd-box-shadow);
+  padding: 8px 12px 12px;
+  font-size: 14px;
+  animation: gtPopIn var(--antd-motion-duration-mid) var(--antd-motion-ease-out);
+}
+@keyframes gtPopIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.gt-datepicker-pop__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0 8px;
+  border-bottom: 1px solid var(--antd-color-border-secondary);
+  margin-bottom: 8px;
+}
+.gt-datepicker-pop__nav {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: var(--antd-border-radius-sm);
+  cursor: pointer;
+  color: var(--antd-color-text-tertiary);
+  transition: background var(--antd-motion-duration-fast),
+              color var(--antd-motion-duration-fast);
+}
+.gt-datepicker-pop__nav:hover {
+  background: var(--antd-color-fill-tertiary);
+  color: var(--antd-color-text);
+}
+.gt-datepicker-pop__title {
+  flex: 1;
+  text-align: center;
+  font-weight: 500;
+  color: var(--antd-color-text);
+  text-transform: capitalize;
+}
+.gt-datepicker-pop__weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 32px);
+  text-align: center;
+  font-size: 12px;
+  color: var(--antd-color-text-tertiary);
+  margin-bottom: 4px;
+}
+.gt-datepicker-pop__weekdays span {
+  display: grid;
+  place-items: center;
+  height: 24px;
+}
+.gt-datepicker-pop__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 32px);
+}
+.gt-datepicker-pop__cell {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-size: 14px;
+  color: var(--antd-color-text);
+  cursor: pointer;
+  border-radius: var(--antd-border-radius-sm);
+  transition: background var(--antd-motion-duration-fast);
+}
+.gt-datepicker-pop__cell:hover { background: var(--antd-color-fill-tertiary); }
+.gt-datepicker-pop__cell.is-selected {
+  background: var(--antd-color-primary);
+  color: #fff;
+}
+.gt-datepicker-pop__cell.is-today:not(.is-selected) {
+  border: 1px solid var(--antd-color-primary);
+}
+.gt-datepicker-pop__cell--empty {
+  cursor: default;
+  pointer-events: none;
+}
+
+/* ============================================================================
+   Previsões de venda — toolbar
+   ========================================================================= */
+.cfg__forecast {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+.cfg__forecast-toolbar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+}
+.cfg__forecast-toolbar > :nth-child(1) { justify-self: start; }
+.cfg__forecast-toolbar > :nth-child(2) { justify-self: center; }
+.cfg__forecast-toolbar > :nth-child(3) { justify-self: end; }
+.cfg__forecast-toolbar__left {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.cfg__forecast-toolbar__right {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.cfg__forecast-month {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.cfg__forecast-month__label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--antd-color-text);
+  min-width: 100px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* AntD-style basic Calendar */
+.gt-calendar {
+  margin-top: 16px;
+  border: 1px solid var(--antd-color-border-secondary);
+  border-radius: var(--antd-border-radius);
+  overflow: hidden;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.gt-calendar[hidden] { display: none; }
+.cfg__forecast-table[hidden] { display: none; }
+.gt-calendar-head {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border-bottom: 1px solid var(--antd-color-border-secondary);
+  background: var(--antd-color-bg-container);
+}
+.gt-calendar-head__cell {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--antd-color-text-secondary);
+  text-align: center;
+}
+.gt-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: 1fr;
+  background: var(--antd-color-border-secondary);
+  gap: 1px;
+  flex: 1;
+  min-height: 0;
+}
+.gt-calendar-cell {
+  background: var(--antd-color-bg-container);
+  min-height: 0;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: background var(--antd-motion-duration-fast);
+}
+.gt-calendar-cell:hover { background: var(--antd-color-fill-tertiary); }
+.gt-calendar-cell.is-dim {
+  background: rgba(250, 250, 250, 0.5);
+  color: var(--antd-color-text-quaternary);
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0px,
+    transparent 7px,
+    rgba(0, 0, 0, 0.025) 7px,
+    rgba(0, 0, 0, 0.025) 8px
+  );
+}
+[data-theme="dark"] .gt-calendar-cell.is-dim {
+  background: transparent;
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0px,
+    transparent 6px,
+    rgba(255, 255, 255, 0.06) 6px,
+    rgba(255, 255, 255, 0.06) 7px
+  );
+}
+[data-theme="dark"] .gt-calendar {
+  border-color: var(--antd-color-border-secondary);
+}
+[data-theme="dark"] .gt-calendar-grid {
+  background: var(--antd-color-border-secondary);
+}
+[data-theme="dark"] .gt-calendar-head {
+  background: var(--antd-color-bg-container);
+}
+[data-theme="dark"] .gt-calendar-cell {
+  background: var(--antd-color-bg-container);
+}
+[data-theme="dark"] .gt-calendar-cell.is-dim {
+  background: transparent;
+}
+[data-theme="dark"] .gt-calendar-cell:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+[data-theme="dark"] .gt-calendar-cell.is-dim:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+.gt-calendar-cell.is-dim:hover { background: var(--antd-color-fill-tertiary); }
+.gt-calendar-cell__day {
+  font-size: 14px;
+  font-weight: 500;
+  color: inherit;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.gt-calendar-cell.is-today .gt-calendar-cell__day {
+  color: var(--antd-color-primary);
+}
+.gt-calendar-cell.is-today {
+  box-shadow: inset 0 2px 0 0 var(--antd-color-primary);
+}
+.gt-calendar-cell__content {
+  font-size: 13px;
+  color: var(--antd-color-text);
+  font-variant-numeric: tabular-nums;
+  margin-top: auto;
+}
+.gt-calendar-cell.is-dim .gt-calendar-cell__content { color: var(--antd-color-text-quaternary); }
+.gt-calendar-cell__content.is-placeholder { color: var(--antd-color-text-quaternary); }
+.gt-calendar-cell__content.is-ai-flash {
+  position: relative;
+  overflow: hidden;
+  height: 1.2em;
+}
+.gt-calendar-cell__content.is-ai-flash .ai-slide {
+  position: absolute;
+  left: 0; right: 0;
+  display: block;
+  will-change: transform, opacity, color;
+}
+.gt-calendar-cell__content.is-ai-flash .ai-slide--out {
+  color: var(--antd-color-text-quaternary);
+  animation: aiSlideOut 280ms ease-in forwards;
+}
+.gt-calendar-cell__content.is-ai-flash .ai-slide--in {
+  color: #52c41a;
+  opacity: 0;
+  animation: aiSlideIn 360ms 320ms ease-out forwards;
+}
+@keyframes aiSlideOut {
+  0%   { transform: translateY(0);    opacity: 1; }
+  100% { transform: translateY(-60%); opacity: 0; }
+}
+@keyframes aiSlideIn {
+  0%   { transform: translateY(60%); opacity: 0; color: #52c41a; }
+  60%  { transform: translateY(0);    opacity: 1; color: #52c41a; }
+  100% { transform: translateY(0);    opacity: 1; color: var(--antd-color-text); }
+}
+.gt-calendar-cell.is-editing { background: var(--antd-color-primary-bg); }
+.gt-calendar-cell.is-focused:not(.is-editing) {
+  /* No outline on focus — visual feedback only via .is-editing or .is-origin */
+}
+.gt-calendar-cell.is-selected:not(.is-editing) {
+  background: var(--antd-color-primary-bg);
+  position: relative;
+  z-index: 1;
+}
+[data-theme="dark"] .gt-calendar-cell.is-selected:not(.is-editing) {
+  background: rgba(22, 119, 255, 0.18);
+}
+/* Editing cell: 2px bottom-only blue indicator */
+.gt-calendar-cell.is-editing {
+  position: relative;
+  z-index: 2;
+  box-shadow: inset 0 -2px 0 0 var(--antd-color-primary);
+}
+/* Origin cell of a multi-selection — full 2px blue border */
+.gt-calendar-cell.is-origin:not(.is-editing) {
+  position: relative;
+  z-index: 2;
+  box-shadow: inset 0 0 0 2px var(--antd-color-primary);
+}
+.gt-calendar-cell { outline: none; user-select: none; }
+.gt-calendar-cell__content { user-select: text; }
+[data-theme="dark"] .gt-calendar-cell.is-editing { background: rgba(22, 119, 255, 0.18); }
+[data-theme="dark"] .gt-calendar-cell.is-editing .gt-calendar-cell__content { color: var(--antd-color-text); }
+.gt-calendar-cell.is-editing .gt-calendar-cell__content {
+  outline: none;
+  color: var(--antd-color-text);
+  cursor: text;
+  font-variant-numeric: tabular-nums;
+  caret-color: var(--antd-color-primary);
+}
+
+/* ============================================================================
+   Horários de funcionamento — list of weekday rows with time ranges
+   ========================================================================= */
+.cfg__horarios {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.cfg__horarios-title {
+  margin: 0 auto 0 0; /* push the rest of the row to the right */
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.85); /* gray-9 */
+}
+[data-theme="dark"] .cfg__horarios-title { color: rgba(255, 255, 255, 0.85); }
+  overflow: auto;
+}
+.cfg__horarios-head {
+  margin-bottom: 24px;
+  flex-shrink: 0;
+}
+.cfg__horarios-foot {
+  margin-top: 24px;
+  flex-shrink: 0;
+}
+.cfg__horarios-list {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+}
+.gt-day-row {
+  display: grid;
+  grid-template-columns: auto 80px 1fr;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px 12px 0;
+  border-bottom: 1px solid var(--antd-color-border-secondary);
+}
+.gt-day-row:first-child { border-top: 1px solid var(--antd-color-border-secondary); }
+.gt-day-row:last-child { border-bottom: 0; }
+.gt-day-row.is-off { background: transparent; }
+.gt-day-row.is-off .gt-day-row__name {
+  color: var(--antd-color-text-quaternary);
+}
+.gt-day-row.is-off .gt-day-row__ranges {
+  opacity: 0.4;
+  pointer-events: none;
+}
+.gt-day-row__name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--antd-color-text);
+}
+.gt-day-row__ranges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+.gt-tr-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.gt-tr-chip__sep {
+  color: var(--antd-color-text-tertiary);
+  font-size: 12px;
+}
+.gt-input--time {
+  width: 96px;
+  font-variant-numeric: tabular-nums;
+}
+.gt-tr-chip__remove {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--antd-color-text-quaternary);
+  border-radius: var(--antd-border-radius);
+  cursor: pointer;
+  transition: background var(--antd-motion-duration-fast),
+              color var(--antd-motion-duration-fast);
+}
+.gt-tr-chip__remove:hover {
+  background: var(--antd-color-error-bg);
+  color: var(--antd-color-error);
+}
+.gt-tr-chip__add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 11px;
+  border: 1px dashed var(--antd-color-border);
+  background: transparent;
+  border-radius: var(--antd-border-radius);
+  font: inherit;
+  font-size: 13px;
+  color: var(--antd-color-text-secondary);
+  cursor: pointer;
+  transition: border-color var(--antd-motion-duration-fast),
+              color var(--antd-motion-duration-fast);
+}
+.gt-tr-chip__add:hover {
+  border-color: var(--antd-color-primary);
+  color: var(--antd-color-primary);
+}
+/* Icon-only variant — borderless icon button (type icon) for "+ add range" */
+.gt-tr-chip__add--icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--antd-color-text-secondary);
+  border-radius: var(--antd-border-radius);
+}
+.gt-tr-chip__add--icon:hover {
+  background: var(--antd-color-fill-tertiary);
+  color: var(--antd-color-primary);
+  border: 0;
+}
+/* Labeled variant — shown only when no time ranges exist in the day */
+.gt-tr-chip__add--labeled {
+  width: auto;
+  padding: 0 8px;
+  gap: 6px;
+}
+.gt-tr-chip__add-label { font-size: 13px; }
+/* Danger variant of the icon button — used by "remove range" (trash) */
+.gt-tr-chip__add--icon.gt-tr-chip__remove {
+  color: var(--antd-color-text-secondary);
+}
+.gt-tr-chip__add--icon.gt-tr-chip__remove:hover {
+  background: var(--antd-color-fill-tertiary);
+  color: var(--antd-color-error);
+}
+.gt-tr-chip__add--icon[disabled],
+.gt-tr-chip__add--icon[disabled]:hover {
+  background: transparent;
+  color: var(--antd-color-text-quaternary);
+  cursor: not-allowed;
+}
+/* ============================================================================
+   Radio.Button (AntD button-style radio group)
+   ========================================================================= */
+.gt-radio-button {
+  display: inline-flex;
+  height: 32px;
+}
+.gt-radio-button__btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 16px;
+  border: 1px solid var(--antd-color-border);
+  border-right-width: 0;
+  background: var(--antd-color-bg-container);
+  color: var(--antd-color-text);
+  font-size: var(--antd-font-size);
+  cursor: pointer;
+  user-select: none;
+  transition: color var(--antd-motion-duration-fast),
+              background var(--antd-motion-duration-fast),
+              border-color var(--antd-motion-duration-fast);
+}
+.gt-radio-button__btn:first-child { border-radius: var(--antd-border-radius) 0 0 var(--antd-border-radius); }
+.gt-radio-button__btn:last-child  { border-radius: 0 var(--antd-border-radius) var(--antd-border-radius) 0; border-right-width: 1px; }
+.gt-radio-button__btn:hover { color: var(--antd-color-primary); }
+.gt-radio-button__btn.is-active {
+  color: var(--antd-color-primary);
+  border-color: var(--antd-color-primary);
+  z-index: 1;
+}
+.gt-radio-button__btn.is-active + .gt-radio-button__btn {
+  border-left-color: var(--antd-color-primary);
+}
+.gt-radio-button__native {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+}
+
+/* ============================================================================
+   Segmented control — used to switch view modes
+   ========================================================================= */
+.gt-seg {
+  display: inline-flex;
+  height: 32px;
+  padding: 2px;
+  border-radius: var(--antd-border-radius);
+  background: var(--antd-color-fill-tertiary);
+  gap: 2px;
+}
+.gt-seg__btn {
+  height: 28px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  color: var(--antd-color-text) !important;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background var(--antd-motion-duration-fast),
+              color var(--antd-motion-duration-fast);
+}
+.gt-seg__btn:hover { color: var(--antd-color-text); }
+.gt-seg__btn.is-active {
+  background: var(--antd-color-bg-container);
+  color: var(--antd-color-text);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+/* TimeRangePicker — AntD TimePicker.RangePicker style */
+.gt-timerange {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--antd-color-border);
+  background: var(--antd-color-bg-container);
+  border-radius: var(--antd-border-radius);
+  font-size: 13px;
+  color: var(--antd-color-text);
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color var(--antd-motion-duration-fast),
+              box-shadow var(--antd-motion-duration-fast);
+}
+.gt-timerange:hover { border-color: var(--antd-color-primary); }
+.gt-timerange.is-open,
+.gt-timerange:focus,
+.gt-timerange:focus-visible {
+  border-color: var(--antd-color-primary);
+  box-shadow: 0 0 0 2px var(--antd-color-primary-bg);
+  outline: 0;
+}
+.gt-timerange__input {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 30px;
+  font-variant-numeric: tabular-nums;
+  color: var(--antd-color-text);
+}
+.gt-timerange__input--placeholder {
+  color: var(--antd-color-text-quaternary);
+}
+.gt-timerange__sep,
+.gt-timerange__suffix {
+  display: inline-flex;
+  align-items: center;
+  color: var(--antd-color-text-tertiary);
+}
+.gt-timerange__sep svg,
+.gt-timerange__suffix svg { width: 14px; height: 14px; }
+.gt-timerange__sep { padding: 0 2px; }
+.gt-timerange__suffix { margin-left: 4px; color: var(--antd-color-text-quaternary); }
+
+/* TRP popup — three columns (H/M/S) AntD style */
+.gt-trp {
+  position: fixed;
+  z-index: 1100;
+  background: var(--antd-color-bg-elevated);
+  border-radius: var(--antd-border-radius-lg);
+  box-shadow: var(--antd-box-shadow);
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  animation: gtPopIn var(--antd-motion-duration-mid) var(--antd-motion-ease-out);
+}
+.gt-trp-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--antd-color-border-secondary);
+}
+.gt-trp-tab {
+  flex: 1;
+  height: 40px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  color: var(--antd-color-text-secondary);
+  cursor: pointer;
+  position: relative;
+  transition: color var(--antd-motion-duration-fast);
+}
+.gt-trp-tab:hover { color: var(--antd-color-primary); }
+.gt-trp-tab.is-active { color: var(--antd-color-primary); }
+.gt-trp-tab.is-active::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  height: 2px;
+  background: var(--antd-color-primary);
+}
+.gt-trp-cols {
+  display: flex;
+  height: 224px;
+  border-bottom: 1px solid var(--antd-color-border-secondary);
+}
+.gt-trp-col {
+  flex: 1;
+  min-width: 0;
+  border-right: 1px solid var(--antd-color-border-secondary);
+  position: relative;
+}
+.gt-trp-col:last-child { border-right: 0; }
+.gt-trp-col__list {
+  height: 100%;
+  overflow-y: auto;
+  padding: 0 4px;
+  scrollbar-width: thin;
+}
+.gt-trp-cell {
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: var(--antd-color-text);
+  font-variant-numeric: tabular-nums;
+  border-radius: var(--antd-border-radius-sm);
+  cursor: pointer;
+  margin: 2px 0;
+  transition: background var(--antd-motion-duration-fast);
+}
+.gt-trp-cell:hover { background: var(--antd-color-fill-tertiary); }
+.gt-trp-cell.is-selected {
+  background: var(--antd-color-primary-bg);
+  color: var(--antd-color-primary);
+  font-weight: 500;
+}
+.gt-trp--single .gt-trp-cols { height: 200px; }
+.gt-trp-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+}
+.gt-btn--sm {
+  height: 24px;
+  padding: 0 8px;
+  font-size: 13px;
+}
+
+/* Horizontal timezone row, aligned to the end of the content */
+.cfg__horarios-tz {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.cfg__horarios-tz__label {
+  font-size: 14px;
+  color: var(--antd-color-text);
+}
+
+/* Horizontal-columns variant of weekday hours */
+.cfg__horarios-modes {
+  margin-bottom: 16px;
+}
+.cfg__horarios-cols {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  border: 1px solid var(--antd-color-border-secondary);
+  border-radius: 4px;
+  padding: 12px;
+}
+.cfg__horarios-cols[hidden] { display: none; }
+.gt-day-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 4px;
+  background: var(--antd-color-fill-quaternary);
+  min-width: 0;
+}
+.gt-day-col.is-off { opacity: 0.55; }
+.gt-day-col.is-off .gt-day-col__ranges {
+  opacity: 0.4;
+  pointer-events: none;
+}
+.gt-day-col__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.gt-day-col__name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--antd-color-text);
+}
+.gt-day-col__ranges {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.gt-tr-chip--v {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  padding: 6px;
+  background: var(--antd-color-bg-container);
+  border: 1px solid var(--antd-color-border-secondary);
+  border-radius: 4px;
+  position: relative;
+}
+.gt-tr-chip--v .gt-input--time {
+  width: 100%;
+  text-align: center;
+}
+.gt-tr-chip--v .gt-tr-chip__sep {
+  align-self: center;
+}
+.gt-tr-chip--v .gt-tr-chip__remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  opacity: 0;
+  transition: opacity var(--antd-motion-duration-fast);
+}
+.gt-tr-chip--v:hover .gt-tr-chip__remove { opacity: 1; }
+.gt-tr-chip__add--v {
+  height: 28px;
+  padding: 0;
+  justify-content: center;
+}
+
+.cfg__forecast .cfg__pdv-totals { margin-top: 16px; }
+
+/* Month nav button — looks like a button with the label + chevron */
+.cfg__forecast-month__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: var(--antd-border-radius);
+  color: var(--antd-color-text);
+  font-size: var(--antd-font-size);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--antd-motion-duration-fast),
+              border-color var(--antd-motion-duration-fast);
+}
+.cfg__forecast-month__btn:hover {
+  background: var(--antd-color-fill-tertiary);
+}
+.cfg__forecast-month__btn.is-open {
+  border-color: var(--antd-color-primary);
+  background: var(--antd-color-bg-container);
+}
+.cfg__forecast-month__btn svg { color: var(--antd-color-text-tertiary); }
+
+/* Month picker popup */
+.cfg__month-picker {
+  position: absolute;
+  z-index: 1100;
+  width: 280px;
+  background: var(--antd-color-bg-elevated);
+  border: 1px solid var(--antd-color-border-secondary);
+  border-radius: var(--antd-border-radius-lg);
+  box-shadow: var(--antd-box-shadow);
+  padding: 12px;
+  transform-origin: top center;
+}
+.cfg__month-picker:not([hidden]) {
+  animation: gtPopIn var(--antd-motion-duration-mid) var(--antd-motion-ease-out);
+}
+.cfg__month-picker__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.cfg__month-picker__year {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--antd-color-text);
+}
+.cfg__month-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+.cfg__month-picker__cell {
+  height: 36px;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  color: var(--antd-color-text);
+  background: transparent;
+  border: 0;
+  border-radius: var(--antd-border-radius);
+  cursor: pointer;
+  transition: background var(--antd-motion-duration-fast),
+              color var(--antd-motion-duration-fast);
+}
+.cfg__month-picker__cell:hover { background: var(--antd-color-fill-tertiary); }
+.cfg__month-picker__cell.is-selected {
+  background: var(--antd-color-primary);
+  color: #fff;
+}
+.cfg__month-picker__cell.is-selected:hover { background: var(--antd-color-primary-hover); }
+.cfg__month-picker__foot {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--antd-color-border-secondary);
+}
+
+/* Table view (Previsões de venda) — overrides for the existing gt-table pattern */
+.cfg__forecast-table.gt-table-wrap {
+  margin-top: 16px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: auto;
+  border: 1px solid var(--antd-color-border-secondary);
+  border-radius: var(--antd-border-radius);
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+}
+.cfg__forecast-table.gt-table-wrap::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+/* Sticky header inside the scroll container */
+.cfg__forecast-table .gt-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  border-top: 0;
+  box-shadow: inset 0 -1px 0 0 var(--antd-color-border-secondary);
+}
+/* Remove the table's own outer border + column dividers since the wrapper has one */
+.cfg__forecast-table .gt-table.gt-table--bordered {
+  border: 0;
+  border-radius: 0;
+  table-layout: fixed;
+  width: 100%;
+  /* sticky thead needs separate border-collapse to work reliably */
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.cfg__forecast-table .gt-table.gt-table--bordered thead th,
+.cfg__forecast-table .gt-table.gt-table--bordered tbody td {
+  border-right: 1px solid var(--antd-color-border-secondary);
+  width: 33.3333%;
+}
+.cfg__forecast-table .gt-table.gt-table--bordered thead th:last-child,
+.cfg__forecast-table .gt-table.gt-table--bordered tbody td:last-child {
+  border-right: 0;
+}
+.cfg__forecast-table .gt-table tbody td { border-left: 0; border-right: 0; }
+.cfg__forecast-table .gt-table tbody tr:first-child td { border-top: 0; }
+.cfg__forecast-table .gt-table tbody tr.is-selected td.cfg__forecast-table__valcell {
+  background: var(--antd-color-primary-bg);
+}
+[data-theme="dark"] .cfg__forecast-table .gt-table tbody tr.is-selected td.cfg__forecast-table__valcell {
+  background: rgba(22, 119, 255, 0.18);
+}
+.cfg__forecast-table .gt-table tbody tr.is-origin:not(.is-editing) td.cfg__forecast-table__valcell {
+  box-shadow: inset 0 0 0 2px var(--antd-color-primary);
+}
+.cfg__forecast-table .gt-table tbody tr.is-editing td.cfg__forecast-table__valcell {
+  background: var(--antd-color-primary-bg);
+  box-shadow: inset 0 -2px 0 0 var(--antd-color-primary);
+}
+[data-theme="dark"] .cfg__forecast-table .gt-table tbody tr.is-editing td.cfg__forecast-table__valcell {
+  background: rgba(22, 119, 255, 0.18);
+}
+.cfg__forecast-table__value {
+  outline: none;
+  display: inline-block;
+  min-width: 60px;
+  caret-color: var(--antd-color-primary);
+  font-variant-numeric: tabular-nums;
+}
+.cfg__forecast-table .gt-table tbody tr { user-select: none; }
+.cfg__forecast-table .gt-table tbody tr td.cfg__forecast-table__valcell.is-placeholder {
+  color: var(--antd-color-text-quaternary);
+}
+.cfg__forecast-table .gt-table tbody tr td.cfg__forecast-table__valcell {
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+.cfg__forecast-table__value { user-select: text; }
+
+.cfg__pdv-totals {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0;
+  margin: 0;
+  font-size: 13px;
+  color: var(--antd-color-text-secondary);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+[data-theme="dark"] .cfg__pdv-totals { background: rgba(255, 255, 255, 0.04); }
+.cfg__pdv-total {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.cfg__pdv-total--right { margin-left: auto; }
+.cfg__pdv-total[hidden] { display: none; }
+.cfg__pdv-total__label { color: var(--antd-color-text-secondary); }
+.cfg__pdv-total__value {
+  font-weight: 600;
+  color: var(--antd-color-text);
+  font-variant-numeric: tabular-nums;
+}
+.cfg__pdv-total__value--active { color: var(--antd-color-success); }
+
+/* PDV totalizer value variants — match the type tag colors */
+.cfg__pdv-total__value--blue    { color: var(--antd-color-primary); }
+.cfg__pdv-total__value--gold    { color: #d48806; }
+.cfg__pdv-total__value--magenta { color: #c41d7f; }
+[data-theme="dark"] .cfg__pdv-total__value--blue    { color: var(--antd-blue-4); }
+[data-theme="dark"] .cfg__pdv-total__value--gold    { color: #fadb14; }
+[data-theme="dark"] .cfg__pdv-total__value--magenta { color: #ff85c0; }
+
+/* Tag — magenta (Preferencial PDVs) */
+.gt-tag--magenta {
+  background: #fff0f6;
+  color: #c41d7f;
+  border-color: #ffadd2;
+}
+[data-theme="dark"] .gt-tag--magenta {
+  background: rgba(235, 47, 150, 0.16);
+  color: #ff85c0;
+  border-color: rgba(235, 47, 150, 0.4);
+}
+.cfg__pdv-total__divider {
+  width: 1px;
+  height: 16px;
+  background: var(--antd-color-border-secondary);
+}
+
+/* ============================================================================
+   Configurações screen — vertical tabs (Unidades) + horizontal tabs (Áreas)
+   ========================================================================= */
+
+/* Make Unidades and Configurações visually separate blocks with gap */
+.gt-blocks--B.is-cfg { gap: 16px; }
+.gt-blocks--B.is-cfg > .gt-pane-left {
+  border-radius: 4px;
+  transition: width var(--antd-motion-duration-mid) var(--antd-motion-ease-out),
+              flex-basis var(--antd-motion-duration-mid) var(--antd-motion-ease-out);
+  will-change: width;
+}
+.gt-blocks--B.is-cfg > .gt-pane-right { border-radius: 4px; }
+.gt-blocks--B.is-cfg > .gt-pane-left > .gt-block,
+.gt-blocks--B.is-cfg > .gt-pane-right > .gt-block {
+  border-radius: 4px;
+  border: 1px solid var(--antd-color-border-secondary);
+}
+
+/* Left pane head (Unidades title + collapse button) */
+.cfg__pane-head {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+}
+.cfg__pane-head .cfg__title { flex: 1; }
+.cfg__pane-collapse {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--antd-color-text-secondary);
+  border-radius: 4px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background var(--antd-motion-duration-fast),
+              color var(--antd-motion-duration-fast);
+}
+.cfg__pane-collapse:hover {
+  background: transparent;
+  color: var(--antd-color-text);
+}
+.cfg__pane-search {
+  padding: 0 16px 12px;
+}
+
+/* Collapsed Unidades pane — icon above the vertical title, 16px padding,
+   no hover background fill. */
+.gt-pane-left.is-collapsed {
+  width: 56px !important;
+  flex: 0 0 56px !important;
+}
+.gt-pane-left.is-collapsed > .gt-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px !important; /* override inline style="padding:0" */
+  gap: 12px;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+.gt-pane-left.is-collapsed .cfg__pane-search,
+.gt-pane-left.is-collapsed .gt-vtabs { display: none; }
+.gt-pane-left.is-collapsed .cfg__pane-head {
+  flex-direction: column-reverse; /* icon (button) above title */
+  padding: 0;
+  gap: 12px;
+  align-items: center;
+  flex: none;
+}
+.gt-pane-left.is-collapsed .cfg__pane-head .cfg__title {
+  flex: none;
+  writing-mode: vertical-rl;
+  text-align: left;
+}
+.gt-pane-left.is-collapsed .cfg__pane-collapse svg { transform: rotate(180deg); }
+
+/* Vertical tabs (Unidades) — 16px horizontal padding to align with the
+   search input above. */
+.gt-vtabs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 16px 8px;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+.gt-vtab {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 40px;
+  flex: none;
+  padding: 0 12px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  color: var(--antd-color-text);
+  cursor: pointer;
+  text-align: left;
+  position: relative;
+  border-radius: var(--antd-border-radius);
+  transition: background var(--antd-motion-duration-fast),
+              color var(--antd-motion-duration-fast);
+}
+.gt-vtab svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  color: var(--antd-color-text-tertiary);
+  transition: color var(--antd-motion-duration-fast);
+}
+.gt-vtab:hover {
+  color: var(--antd-color-primary);
+  background: var(--antd-color-fill-tertiary);
+}
+.gt-vtab:hover svg { color: var(--antd-color-primary); }
+.gt-vtab.is-active {
+  background: var(--antd-color-primary-bg);
+  color: var(--antd-color-primary);
+  font-weight: 500;
+}
+.gt-vtab.is-active svg { color: var(--antd-color-primary); }
+
+.gt-vtab__warn {
+  margin-left: auto;
+  display: inline-grid;
+  place-items: center;
+  color: #faad14;
+  flex: none;
+}
+.gt-vtab__warn svg { color: inherit; }
+.gt-pane-left.is-collapsed .gt-vtab__warn { display: none; }
+
+[data-theme="dark"] .gt-vtab:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+[data-theme="dark"] .gt-vtab.is-active {
+  background: rgba(22, 119, 255, 0.18);
+}
+
+/* (vertical ink bar disabled in pill style) */
+.gt-vtabs-ink { display: none; }
+
+/* Highlighted match within a unit label */
+.gt-vtab__hl {
+  color: var(--antd-blue-5);
+  background: transparent;
+  font-weight: 600;
+}
+
+/* Empty state shown when search has no results */
+.gt-vtabs-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--antd-color-text-quaternary);
+}
+.gt-vtabs-empty[hidden] { display: none; }
+.gt-vtabs-empty__text {
+  font-size: 13px;
+  color: var(--antd-color-text-tertiary);
+}
+
+/* Right pane head (title) — same visual weight as Unidades title */
+.cfg__head {
+  padding: 16px 16px 4px;
+}
+.cfg__head--noborder { border-bottom: 0; }
+.cfg__title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 24px;
+  color: var(--antd-color-text);
+}
+
+/* Horizontal tabs (Áreas) — AntD Tabs basic. Items + sliding ink bar.
+   Matches https://ant.design/components/tabs#tabs-demo-basic */
+.gt-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 32px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--antd-color-border-secondary);
+  overflow: visible;
+  position: relative;
+}
+.gt-tab {
+  display: inline-flex;
+  align-items: center;
+  height: 46px;
+  padding: 12px 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  color: var(--antd-color-text);
+  cursor: pointer;
+  position: relative;
+  white-space: nowrap;
+  transition: color var(--antd-motion-duration-slow) var(--antd-motion-ease-in-out);
+}
+.gt-tab:hover { color: var(--antd-color-primary-hover); }
+.gt-tab:active { color: var(--antd-color-primary-active); }
+.gt-tab.is-active { color: var(--antd-color-primary); }
+
+/* Sliding ink bar — AntD basic motion */
+.gt-tabs-ink {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--antd-color-primary);
+  width: var(--ink-w, 0);
+  transform: translateX(var(--ink-x, 0));
+  transition: transform var(--antd-motion-duration-slow) var(--antd-motion-ease-in-out),
+              width var(--antd-motion-duration-slow) var(--antd-motion-ease-in-out);
+  pointer-events: none;
+}
+
+/* Content area below tabs */
+.cfg__content {
+  flex: 1;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+}
+.cfg__content .gt-block__placeholder {
+  flex: 1;
+}
+
+/* Loading skeleton — applied per-element on a panel marked .is-loading.
+   Replaces the content of any element with [data-skel] with a shimmer,
+   preserving its size, padding, and spacing so the layout doesn't jump. */
+.gt-skel {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.04) 25%,
+    rgba(0, 0, 0, 0.08) 37%,
+    rgba(0, 0, 0, 0.04) 63%
+  );
+  background-size: 400% 100%;
+  animation: gtSkel 1.4s ease infinite;
+  border-radius: var(--antd-border-radius);
+}
+[data-theme="dark"] .gt-skel {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06) 25%,
+    rgba(255, 255, 255, 0.12) 37%,
+    rgba(255, 255, 255, 0.06) 63%
+  );
+  background-size: 400% 100%;
+}
+@keyframes gtSkel {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+/* Hide real text + interactive controls when an ancestor is loading; keep
+   layout boxes (rows, cells, toolbars) intact so paddings/widths stick. */
+.cfg__panel.is-loading {
+  pointer-events: none;
+}
+
+/* Hide all text/badge/icon-bearing elements and replace their inner with a
+   shimmer placeholder via an absolutely-positioned ::after. This preserves
+   widths/heights so the layout doesn't jump when the real content loads.
+   Toolbars, search inputs and buttons are intentionally EXCLUDED — those
+   don't carry dynamic data, so they keep showing their real selves. */
+.cfg__panel.is-loading .gt-table tbody td,
+.cfg__panel.is-loading .gt-day-row__name,
+.cfg__panel.is-loading .gt-day-row__ranges,
+.cfg__panel.is-loading .gt-calendar-cell__day,
+.cfg__panel.is-loading .gt-calendar-cell__content,
+.cfg__panel.is-loading .cfg__pdv-totals {
+  position: relative;
+  color: transparent !important;
+}
+.cfg__panel.is-loading .gt-table tbody td *,
+.cfg__panel.is-loading .gt-day-row__name *,
+.cfg__panel.is-loading .gt-day-row__ranges *,
+.cfg__panel.is-loading .gt-calendar-cell__day *,
+.cfg__panel.is-loading .gt-calendar-cell__content *,
+.cfg__panel.is-loading .cfg__pdv-totals * {
+  visibility: hidden !important;
+}
+
+/* Shimmer rectangles sized inside each element's content box */
+.cfg__panel.is-loading .gt-table tbody td::after,
+.cfg__panel.is-loading .gt-day-row__name::after,
+.cfg__panel.is-loading .gt-calendar-cell__day::after,
+.cfg__panel.is-loading .gt-calendar-cell__content::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 50%;
+  height: 12px;
+  transform: translateY(-50%);
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.06) 25%,
+    rgba(0, 0, 0, 0.10) 37%,
+    rgba(0, 0, 0, 0.06) 63%
+  );
+  background-size: 400% 100%;
+  animation: gtSkel 1.4s ease infinite;
+  border-radius: 3px;
+  pointer-events: none;
+}
+[data-theme="dark"] .cfg__panel.is-loading .gt-table tbody td::after,
+[data-theme="dark"] .cfg__panel.is-loading .gt-day-row__name::after,
+[data-theme="dark"] .cfg__panel.is-loading .gt-calendar-cell__day::after,
+[data-theme="dark"] .cfg__panel.is-loading .gt-calendar-cell__content::after {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06) 25%,
+    rgba(255, 255, 255, 0.12) 37%,
+    rgba(255, 255, 255, 0.06) 63%
+  );
+  background-size: 400% 100%;
+}
+.cfg__panel.is-loading .gt-day-row__name::after {
+  left: 0;
+  right: 24px;
+}
+.cfg__panel.is-loading .gt-calendar-cell__day::after {
+  left: auto;
+  right: 12px;
+  width: 18px;
+}
+.cfg__panel.is-loading .gt-calendar-cell__content::after {
+  left: 12px;
+  right: 12px;
+  top: auto;
+  bottom: 12px;
+  height: 11px;
+  width: 60%;
+  transform: none;
+}
+
+/* (Toolbar shimmers removed — static UI doesn't need skeleton placeholders) */
+
+/* Day-row ranges — single shimmer button shape */
+.cfg__panel.is-loading .gt-day-row__ranges::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 220px;
+  height: 32px;
+  transform: translateY(-50%);
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.06) 25%,
+    rgba(0, 0, 0, 0.10) 37%,
+    rgba(0, 0, 0, 0.06) 63%
+  );
+  background-size: 400% 100%;
+  animation: gtSkel 1.4s ease infinite;
+  border-radius: var(--antd-border-radius);
+}
+
+/* PDV totals row — individual shimmer per label / value, sized to fit content */
+.cfg__panel.is-loading .cfg__pdv-total__label,
+.cfg__panel.is-loading .cfg__pdv-total__value {
+  position: relative;
+  color: transparent !important;
+}
+.cfg__panel.is-loading .cfg__pdv-total__label::after,
+.cfg__panel.is-loading .cfg__pdv-total__value::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 12px;
+  transform: translateY(-50%);
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.06) 25%,
+    rgba(0, 0, 0, 0.10) 37%,
+    rgba(0, 0, 0, 0.06) 63%
+  );
+  background-size: 400% 100%;
+  animation: gtSkel 1.4s ease infinite;
+  border-radius: 3px;
+}
+[data-theme="dark"] .cfg__panel.is-loading .cfg__pdv-total__label::after,
+[data-theme="dark"] .cfg__panel.is-loading .cfg__pdv-total__value::after {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06) 25%,
+    rgba(255, 255, 255, 0.12) 37%,
+    rgba(255, 255, 255, 0.06) 63%
+  );
+  background-size: 400% 100%;
+}
+.cfg__panel.is-loading .cfg__pdv-totals::after { display: none; }
+.cfg__panel.is-loading .cfg__pdv-total__divider { visibility: hidden; }
+
+/* Area panels — only one is visible at a time (driven by JS). */
+.cfg__panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.cfg__panel[hidden] { display: none; }
+
+/* ============================================================================
+   PDV configuration area — toolbar + table
+   ========================================================================= */
+.cfg__pdv {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: 16px;
+  overflow: hidden;
+}
+.cfg__pdv-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.cfg__feriado-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ============================================================================
+   Switch — AntD Switch (size default)
+   ========================================================================= */
+/* Bordered table variant */
+.gt-table.gt-table--bordered {
+  border: 1px solid var(--antd-color-border-secondary);
+  border-radius: 4px;
+}
+.gt-table.gt-table--bordered thead th,
+.gt-table.gt-table--bordered tbody td {
+  border-right: 1px solid var(--antd-color-border-secondary);
+}
+.gt-table.gt-table--bordered thead th:last-child,
+.gt-table.gt-table--bordered tbody td:last-child {
+  border-right: 0;
+}
+
+/* Small size variant — tighter row height + padding (AntD size="small") */
+.gt-table.gt-table--sm thead th {
+  height: 40px;
+  padding: 0 8px;
+}
+.gt-table.gt-table--sm tbody td {
+  height: 40px;
+  padding: 0 8px;
+  vertical-align: middle;
+}
+
+/* Middle size variant — between sm and default (AntD size="middle") */
+.gt-table.gt-table--md thead th {
+  height: 48px;
+  padding: 0 12px;
+}
+.gt-table.gt-table--md tbody td {
+  height: 48px;
+  padding: 0 12px;
+  vertical-align: middle;
+}
+
+/* Switch — AntD Switch (size default) */
+.gt-switch {
+  display: inline-block;
+  position: relative;
+  width: 44px;
+  height: 22px;
+  cursor: pointer;
+  vertical-align: middle;
+}
+.gt-switch input {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+  z-index: 1;
+}
+.gt-switch__track {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 100px;
+  transition: background var(--antd-motion-duration-mid) var(--antd-motion-ease-out);
+}
+.gt-switch__track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px 0 rgba(0, 35, 11, 0.2);
+  transition: left var(--antd-motion-duration-mid) var(--antd-motion-ease-out);
+}
+.gt-switch input:checked + .gt-switch__track {
+  background: var(--antd-color-primary);
+}
+.gt-switch input:checked + .gt-switch__track::after {
+  left: 24px;
+}
+.gt-switch input:hover + .gt-switch__track {
+  background: rgba(0, 0, 0, 0.45);
+}
+.gt-switch input:checked:hover + .gt-switch__track {
+  background: var(--antd-color-primary-hover);
+}
+
+/* Switch small variant (AntD size="small") */
+.gt-switch.gt-switch--sm {
+  width: 28px;
+  height: 16px;
+}
+.gt-switch.gt-switch--sm .gt-switch__track::after {
+  width: 12px;
+  height: 12px;
+}
+.gt-switch.gt-switch--sm input:checked + .gt-switch__track::after {
+  left: 14px;
+}
+
+.gt-table__link {
+  color: var(--antd-color-text);
+  font-weight: 500;
+  text-decoration: none;
+  transition: color var(--antd-motion-duration-fast);
+}
+.gt-table__link:hover { color: var(--antd-color-primary); }
+
+/* Sortable / filterable column header */
+.gt-table th.gt-th-sortable,
+.gt-table th.gt-th-filterable {
+  cursor: pointer;
+  user-select: none;
+}
+.gt-table th.gt-th-sortable:hover,
+.gt-table th.gt-th-filterable:hover {
+  background: #f0f0f0;
+}
+[data-theme="dark"] .gt-table th.gt-th-sortable:hover,
+[data-theme="dark"] .gt-table th.gt-th-filterable:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.gt-th-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.gt-th-sorter {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  margin-left: 2px;
+  color: var(--antd-color-text-quaternary);
+  line-height: 0;
+}
+.gt-th-sorter svg { width: 9px; height: 9px; display: block; }
+.gt-th-sorter svg + svg { margin-top: 1px; }
+.gt-th-sorter .is-on { color: var(--antd-color-primary); }
+.gt-th-filter {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-left: 2px;
+  border-radius: 4px;
+  color: var(--antd-color-text-quaternary);
+  cursor: pointer;
+  transition: background var(--antd-motion-duration-fast),
+              color var(--antd-motion-duration-fast);
+}
+.gt-th-filter:hover { background: var(--antd-color-fill-tertiary); color: var(--antd-color-text); }
+.gt-th-filter.is-on { color: var(--antd-color-primary); }
+.gt-th-filter svg { width: 12px; height: 12px; }
+.gt-table__action {
+  width: 24px;
+  height: 24px;
+  margin-left: 2px;
+  border: 0;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--antd-color-text-secondary);
+  display: inline-grid;
+  place-items: center;
+  vertical-align: middle;
+  transition: background var(--antd-motion-duration-fast),
+              color var(--antd-motion-duration-fast);
+}
+.gt-table__action:hover {
+  background: var(--antd-color-fill-tertiary);
+  color: var(--antd-color-primary);
+}
+.gt-table__action--danger:hover { color: var(--antd-color-error); }
+
+/* Truncating user cell variant (used in "Últ. modificação") — single line */
+.gt-user-cell--truncate {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+/* "Gerenciar" link in actions column */
+.gt-table__link-action {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0;
+  font-size: 14px;
+  color: var(--antd-color-primary);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color var(--antd-motion-duration-fast);
+}
+.gt-table__link-action:hover { color: var(--antd-color-primary-hover); }
+.gt-table td.gt-table__actions,
+.gt-table th.gt-table__actions-head {
+  padding: 0 16px;
+}
+
+/* ============================================================================
+   Tag — AntD default (4px radius, status-colored)
+   ========================================================================= */
+.gt-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: var(--antd-border-radius-sm);
+  font-size: 12px;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid;
+}
+/* Inside tables, tags are borderless (background carries the color) */
+.gt-table .gt-tag { border-color: transparent; }
+.gt-tag--default {
+  background: #fafafa;
+  color: var(--antd-color-text-secondary);
+  border-color: var(--antd-color-border);
+}
+.gt-tag--success {
+  background: #f6ffed;
+  color: #389e0d;
+  border-color: #b7eb8f;
+}
+.gt-tag--processing {
+  background: #e6f4ff;
+  color: var(--antd-color-primary);
+  border-color: #91caff;
+}
+.gt-tag--warning {
+  background: #fffbe6;
+  color: #d48806;
+  border-color: #ffe58f;
+}
+.gt-tag--error {
+  background: #fff2f0;
+  color: #cf1322;
+  border-color: #ffccc7;
+}
+[data-theme="dark"] .gt-tag--default {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--antd-color-text-secondary);
+}
+[data-theme="dark"] .gt-tag--success {
+  background: rgba(82, 196, 26, 0.16);
+  color: #95de64;
+  border-color: rgba(82, 196, 26, 0.4);
+}
+[data-theme="dark"] .gt-tag--processing {
+  background: rgba(22, 119, 255, 0.16);
+  color: var(--antd-blue-4);
+  border-color: rgba(22, 119, 255, 0.4);
+}
+[data-theme="dark"] .gt-tag--warning {
+  background: rgba(250, 173, 20, 0.16);
+  color: #fadb14;
+  border-color: rgba(250, 173, 20, 0.4);
+}
+
+/* ============================================================================
+   Side menu drawer (opens from sidebar)
+   ========================================================================= */
+.gt-sidemenu-mask {
+  position: fixed;
+  left: var(--sidebar-width);
+  top: 0; right: 0; bottom: 0;
+  background: var(--antd-color-bg-mask);
+  z-index: 98;
+  opacity: 0;
+  transition: opacity var(--antd-motion-duration-mid) var(--antd-motion-ease-out);
+}
+.gt-sidemenu-mask.is-open { opacity: 1; }
+/* (mask uses opacity transition now) */
+
+.gt-sidemenu {
+  position: fixed;
+  left: 0;
+  top: 0; bottom: 0;
+  width: calc(var(--sidebar-width) + 284px);
+  background: var(--antd-color-bg-container);
+  box-shadow: none;
+  z-index: 99;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform var(--antd-motion-duration-slow) var(--antd-motion-ease-out),
+              box-shadow var(--antd-motion-duration-slow) var(--antd-motion-ease-out);
+  padding-left: var(--sidebar-width);
+  box-sizing: border-box;
+}
+.gt-sidemenu.is-open {
+  transform: translateX(0);
+  box-shadow: var(--antd-box-shadow);
+}
+.gt-sidemenu.is-open {
+  transform: translateX(0);
+  visibility: visible;
+}
+
+.gt-sidemenu__head {
+  height: 64px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--antd-color-border-secondary);
+}
+.gt-sidemenu__title {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--antd-color-text);
+}
+.gt-sidemenu__close {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--antd-color-text-secondary);
+  border-radius: var(--antd-border-radius);
+  cursor: pointer;
+  transition: background var(--antd-motion-duration-fast);
+}
+.gt-sidemenu__close:hover { background: var(--antd-color-fill-tertiary); color: var(--antd-color-text); }
+.gt-sidemenu__close svg { width: 18px; height: 18px; }
+
+.gt-sidemenu__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  flex: 1;
+  overflow: auto;
+}
+.gt-sidemenu__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  font-size: 14px;
+  color: var(--antd-color-text);
+  text-decoration: none;
+  border-radius: var(--antd-border-radius);
+  transition: background var(--antd-motion-duration-fast),
+              color var(--antd-motion-duration-fast);
+  cursor: pointer;
+}
+.gt-sidemenu__item svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  color: var(--antd-color-text-secondary);
+}
+.gt-sidemenu__item:hover {
+  background: var(--antd-color-fill-tertiary);
+  color: var(--antd-color-primary);
+}
+.gt-sidemenu__item:hover svg { color: var(--antd-color-primary); }
+
+.gt-sidemenu__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  overflow: auto;
+}
+.gt-sidemenu__body > .gt-block__placeholder {
+  flex: 1;
+  min-height: 0;
+}
+
+/* ============================================================================
+   Sales chart panel — appears above the footer in both panes.
+   ========================================================================= */
+.gt-chart-handle {
+  height: 6px;
+  flex-shrink: 0;
+  background: transparent;
+  cursor: row-resize;
+  position: relative;
+  margin: -3px 0;
+  z-index: 5;
+}
+.gt-chart-handle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0; right: 0;
+  height: 1px;
+  background: var(--antd-color-border-secondary);
+  transform: translateY(-50%);
+  transition: background var(--antd-motion-duration-mid) var(--antd-motion-ease-out),
+              height var(--antd-motion-duration-fast);
+}
+.gt-chart-handle:hover::after,
+.gt-chart-handle.is-dragging::after {
+  background: var(--antd-color-primary);
+  height: 2px;
+}
+.gt-chart-handle-tip {
+  position: absolute;
+  top: 50%;
+  left: var(--tip-x, 50%);
+  transform: translate(-50%, calc(-100% - 12px));
+  background: var(--antd-color-bg-spotlight);
+  color: var(--antd-color-white);
+  font-size: 12px;
+  font-weight: 400;
+  padding: 5px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--antd-motion-duration-mid) var(--antd-motion-ease-out);
+  transition-delay: 0s;
+  z-index: 100;
+  box-shadow: var(--antd-box-shadow);
+}
+.gt-chart-handle:hover .gt-chart-handle-tip {
+  opacity: 1;
+  transition-delay: 1s;
+}
+.gt-chart-handle.is-dragging .gt-chart-handle-tip { opacity: 0; transition-delay: 0s; }
+
+.gt-chart-legend {
+  flex-shrink: 0;
+  border-top: 1px solid var(--antd-color-border-secondary);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-sizing: border-box;
+}
+.gt-chart-legend__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.gt-chart-legend__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--antd-color-text);
+  flex: 1;
+}
+.gt-chart-legend__close {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: var(--antd-color-text-secondary);
+  border-radius: 4px;
+  transition: background var(--antd-motion-duration-fast);
+}
+.gt-chart-legend__close:hover {
+  background: var(--antd-color-fill-tertiary);
+  color: var(--antd-color-text);
+}
+.gt-chart-legend__close svg { width: 14px; height: 14px; }
+
+.gt-chart-legend__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.gt-chart-legend__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--antd-color-text);
+  cursor: pointer;
+  user-select: none;
+}
+.gt-chart-legend__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+.gt-chart-legend__label {
+  flex: 1;
+}
+.gt-chart-legend__row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--antd-color-primary);
+  cursor: pointer;
+}
+
+/* Chart graph — lives inside the timeline's inner track (scrolls with it).
+   Background transparent so the dashed hour gridlines remain visible through it. */
+.tl__chart {
+  flex-shrink: 0;
+  border-top: 1px solid var(--antd-color-border-secondary);
+  background: transparent;
+  position: relative;
+}
+.tl__chart-wrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.tl__chart-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.tl__chart-zones {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.tl__chart-zone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  pointer-events: auto;
+  transform: translateX(-50%);
+}
+
+.tl__chart-tooltip {
+  position: fixed;
+  background: var(--antd-color-bg-spotlight);
+  color: var(--antd-color-white);
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 8px 10px;
+  border-radius: var(--antd-border-radius);
+  box-shadow: var(--antd-box-shadow);
+  pointer-events: none;
+  z-index: 2000;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.tl__chart-tooltip-time {
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+.tl__chart-tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tl__chart-tooltip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.tl__chart-tooltip-val {
+  margin-left: auto;
+  padding-left: 24px;
+  font-weight: 600;
+}
+
+/* ============================================================================
+   AntD-style tooltips — body-portal driven by data-tooltip / data-tooltip-pos.
+   Rendered by <GlobalTooltips /> so they aren't clipped by overflow:hidden
+   ancestors.
+   ========================================================================= */
+.gt-tooltip {
+  position: fixed;
+  background: var(--antd-color-bg-spotlight);
+  color: var(--antd-color-white);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  padding: 6px 8px;
+  border-radius: var(--antd-border-radius);
+  max-width: 280px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+  white-space: pre-line;
+  box-shadow: var(--antd-box-shadow);
+  pointer-events: none;
+  z-index: 2000;
+  opacity: 0;
+  transition: opacity var(--antd-motion-duration-mid) var(--antd-motion-ease-out);
+}
+.gt-tooltip.is-visible { opacity: 1; }
+.gt-tooltip::before {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  background: transparent;
+  border: 4px solid transparent;
+}
+.gt-tooltip--top::before {
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-top-color: var(--antd-color-bg-spotlight);
+}
+.gt-tooltip--bottom::before {
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-bottom-color: var(--antd-color-bg-spotlight);
+}
+.gt-tooltip--left::before {
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-left-color: var(--antd-color-bg-spotlight);
+}
+.gt-tooltip--right::before {
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-right-color: var(--antd-color-bg-spotlight);
+}
+
+/* Hide scrollbars on all internal scroll surfaces while keeping scroll
+   functionality (mouse wheel, trackpad, keyboard). */
+.tl__scroll-x,
+.tl__body,
+.gt-pane-left ul,
+.gt-vtabs {
+  scrollbar-width: none;        /* Firefox */
+  -ms-overflow-style: none;     /* IE/Edge */
+}
+.tl__scroll-x::-webkit-scrollbar,
+.tl__body::-webkit-scrollbar,
+.gt-pane-left ul::-webkit-scrollbar,
+.gt-vtabs::-webkit-scrollbar {
+  display: none;                /* WebKit */
+  width: 0;
+  height: 0;
+}
+
+/* ============================================================================
+   AntSelect — borderless variant used in the timeline toolbar (Gotrade pattern)
+   ========================================================================= */
+.ant-select {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 11px;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 22px;
+  color: var(--antd-color-text);
+  background: var(--antd-color-bg-container);
+  border: 1px solid var(--antd-color-border);
+  border-radius: var(--antd-border-radius);
+  cursor: pointer;
+  outline: none;
+  transition: border-color var(--antd-motion-duration-mid) var(--antd-motion-ease-out),
+              background var(--antd-motion-duration-mid) var(--antd-motion-ease-out),
+              box-shadow var(--antd-motion-duration-mid) var(--antd-motion-ease-out);
+}
+.ant-select:hover { border-color: var(--antd-color-primary-hover); }
+.ant-select:focus,
+.ant-select.open {
+  border-color: var(--antd-color-primary);
+  box-shadow: 0 0 0 2px var(--antd-color-primary-bg);
+}
+.ant-select.borderless {
+  border-color: transparent;
+  background: transparent;
+  padding: 0 8px;
+}
+.ant-select.borderless:hover {
+  border-color: transparent;
+  background: var(--antd-color-fill-tertiary);
+}
+.ant-select.borderless:focus,
+.ant-select.borderless.open {
+  border-color: transparent;
+  box-shadow: none;
+  background: var(--antd-color-fill-tertiary);
+}
+.ant-select.borderless .ant-select-selection-item { padding-right: 22px; }
+.ant-select.borderless .ant-select-arrow { right: 8px; }
+.ant-select-selection-item {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 18px;
+}
+.ant-select-selection-item--placeholder {
+  color: var(--antd-color-text-quaternary);
+}
+.ant-select-arrow {
+  position: absolute;
+  right: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--antd-color-text-quaternary);
+  pointer-events: none;
+  transition: transform var(--antd-motion-duration-mid) var(--antd-motion-ease-out);
+}
+.ant-select.open .ant-select-arrow { transform: translateY(-50%) rotate(180deg); }
+.ant-select-dropdown {
+  position: fixed;
+  z-index: 1050;
+  background: var(--antd-color-bg-container);
+  border-radius: var(--antd-border-radius-lg);
+  box-shadow: var(--antd-box-shadow);
+  padding: 4px;
+  animation: antSelectFadeIn 120ms cubic-bezier(0.4, 0, 0.2, 1);
+  max-height: 320px;
+  overflow-y: auto;
+}
+@keyframes antSelectFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.ant-select-item-list { display: flex; flex-direction: column; }
+.ant-select-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  min-height: 32px;
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--antd-color-text);
+  cursor: pointer;
+  border-radius: var(--antd-border-radius-sm);
+  transition: background var(--antd-motion-duration-fast) var(--antd-motion-ease-out);
+}
+.ant-select-item-option:hover {
+  background: var(--antd-color-fill-tertiary);
+}
+.ant-select-item-option-selected {
+  background: var(--antd-color-primary-bg);
+  font-weight: 600;
+  color: var(--antd-color-text);
+}
+.ant-select-item-option-selected:hover {
+  background: var(--antd-color-primary-bg);
+}
+.ant-select-item-option-content { flex: 1; }
+.ant-select-item-option-state {
+  color: var(--antd-color-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+}
+
+/* Default antd-style avatar (size default: 32×32 with 18px icon) */
+.gt-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--antd-color-text-quaternary);
+  color: var(--antd-color-white);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.gt-avatar svg { width: 18px; height: 18px; }
+
+/* ============================================================================
+   Timeline (central block) — Escala de Novembro reference
+   ========================================================================= */
+.tl {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Left-edge shadow indicating horizontally scrolled-off content. */
+.tl::before,
+.tl::after {
+  content: "";
+  position: absolute;
+  top: 52px; /* below the toolbar */
+  bottom: 0;
+  width: 12px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--antd-motion-duration-mid) var(--antd-motion-ease-out);
+  z-index: 8;
+}
+.tl::before {
+  left: 0;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.10), transparent);
+}
+.tl::after {
+  right: 0;
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.10), transparent);
+}
+.tl.is-scrolled-x::before,
+.tl.is-scrolled-x::after { opacity: 1; }
+
+/* Toolbar — height 52 so the ruler bottom seam aligns with the colaboradores
+   search-bar TOP edge. 3-col grid: empty | day-nav center | actions right. */
+.tl__toolbar {
+  height: 52px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 0 16px;
+  flex-shrink: 0;
+}
+.tl__toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  justify-self: start;
+}
+.tl__toolbar-center {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-self: center;
+}
+.tl__toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  justify-self: end;
+}
+.tl__date {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--antd-color-text);
+  min-width: 175px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* "Hoje" link button — appears when navigating to a non-today date */
+.tl__today-btn {
+  margin-left: 8px;
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--antd-color-primary);
+  border-radius: var(--antd-border-radius);
+  background: transparent;
+  color: var(--antd-color-primary);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background var(--antd-motion-duration-fast),
+              color var(--antd-motion-duration-fast),
+              border-color var(--antd-motion-duration-fast);
+}
+.tl__today-btn:hover {
+  background: var(--antd-color-primary);
+  color: #fff;
+  border-color: var(--antd-color-primary);
+}
+.tl__nav-btn,
+.tl__icon-btn {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  border-radius: 4px;
+  color: var(--antd-color-text-secondary);
+  cursor: pointer;
+  transition: background var(--antd-motion-duration-fast);
+}
+.tl__nav-btn svg,
+.tl__icon-btn svg { width: 16px; height: 16px; }
+.tl__nav-btn:hover,
+.tl__icon-btn:hover {
+  background: var(--antd-color-fill-tertiary);
+  color: var(--antd-color-text);
+}
+.tl__view-btn {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--antd-color-border);
+  background: var(--antd-color-bg-container);
+  border-radius: var(--antd-border-radius);
+  font-size: 13px;
+  color: var(--antd-color-text);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: border-color var(--antd-motion-duration-fast),
+              color var(--antd-motion-duration-fast);
+}
+.tl__view-btn:hover {
+  border-color: var(--antd-color-primary-hover);
+  color: var(--antd-color-primary-hover);
+}
+.tl__view-btn svg { width: 12px; height: 12px; }
+
+/* Horizontal scroll wrapper — ruler + body + totals share this so they
+   all scroll together horizontally while the toolbar stays put. */
+.tl__scroll-x {
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  display: flex;
+  min-height: 0;
+}
+.tl__inner {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Hourly vertical gridlines — span from the bottom of the ruler down to
+   the top of the totals footer, sitting behind all content.
+   NOTE: .tl__inner only contains ruler + body + totals (the toolbar is
+   outside it), so the top offset is the RULER height, not top-h. */
+.tl__gridlines {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--gt-top-h) - 52px);  /* = ruler height (48px) */
+  bottom: var(--gt-footer-h);          /* = totals-top seam */
+  pointer-events: none;
+  z-index: 0;
+}
+.tl__gridline {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 1px dashed var(--antd-color-border-secondary);
+}
+/* Darker line that snaps to every 30-min mark with the mouse. */
+.tl__gridline--hover {
+  border-left-color: var(--antd-color-text-tertiary);
+  z-index: 1;
+}
+
+/* Hover info bubble that follows the cursor while hovering over the timeline. */
+.tl__hover-tooltip {
+  position: fixed;
+  background: var(--antd-color-bg-spotlight);
+  color: var(--antd-color-white);
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 8px 10px;
+  border-radius: var(--antd-border-radius);
+  box-shadow: var(--antd-box-shadow);
+  pointer-events: none;
+  z-index: 2000;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.tl__hover-tooltip-time {
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+/* Ruler */
+.tl__ruler {
+  flex-shrink: 0;
+  height: calc(var(--gt-top-h) - 52px); /* 48 — toolbar 52 + ruler 48 = top-h */
+  padding: 0;
+  background: #fafafa; /* gray-2 */
+  border-top: 1px solid var(--antd-color-border-secondary);
+  border-bottom: 1px solid var(--antd-color-border-secondary);
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+[data-theme="dark"] .tl__ruler {
+  background: rgba(255, 255, 255, 0.04);
+}
+.tl__ruler-track {
+  display: flex;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+}
+.tl__ruler-cell {
+  position: relative;
+  height: 100%;
+  flex-shrink: 0;
+}
+.tl__ruler-label {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  color: var(--antd-color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.tl__ruler-tick {
+  position: absolute;
+  bottom: 0;
+  height: 8px;
+  width: 1px;
+  background: var(--antd-color-border); /* gray-5 (#d9d9d9) */
+}
+.tl__ruler-tick--hour { left: 0; }
+.tl__ruler-tick--half { left: 50%; }
+
+/* Body */
+.tl__body {
+  flex: 1;
+  position: relative;
+  padding: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+}
+.tl__rows {
+  position: relative;
+}
+.tl__row {
+  position: relative;
+  height: var(--gt-row-h);
+  border-bottom: 1px dashed var(--antd-color-border-secondary);
+  transition: background var(--antd-motion-duration-fast);
+}
+.tl__row.is-hovered,
+.gt-colab-row.is-hovered {
+  background: var(--antd-color-fill-quaternary);
+}
+.gt-colab-row {
+  transition: background var(--antd-motion-duration-fast);
+}
+
+/* Now line — confined to the body. Color: red-7 from AntD's red palette. */
+.tl__now {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #cf1322; /* red-7 */
+  pointer-events: none;
+  z-index: 10;
+}
+.tl__now-dot {
+  position: absolute;
+  top: calc(var(--gt-top-h) - 52px); /* = ruler-bottom seam, relative to .tl__inner */
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #cf1322; /* red-7 */
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Bars — fill the row entirely; visual separation comes from row dashed borders. */
+.tl__bar {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  border-radius: 4px;
+  padding: 4px 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-size: 10px;
+  line-height: 1.3;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: background var(--antd-motion-duration-fast);
+}
+.tl__bar strong { font-weight: 600; }
+.tl__bar--trabalha {
+  background: var(--gt-trabalha-bg);
+  color: var(--gt-trabalha-fg);
+}
+.tl__bar--intervalo {
+  background: var(--gt-intervalo-bg);
+  color: var(--gt-intervalo-fg);
+}
+.tl__row.is-hovered .tl__bar--trabalha {
+  background: var(--gt-trabalha-bg-hover);
+}
+.tl__row.is-hovered .tl__bar--intervalo {
+  background: var(--gt-intervalo-bg-hover);
+}
+
+/* Totals footer — just numbers (the "Total de PDVs abertos" label lives in
+   the colaboradores panel's footer to the left, aligned on the same band) */
+.tl__totals {
+  flex-shrink: 0;
+  border-top: 1px solid var(--antd-color-border-secondary);
+  display: flex;
+  align-items: center;
+  height: var(--gt-footer-h);
+  box-sizing: border-box;
+  padding: 0;
+}
+.tl__totals-track {
+  flex: 1;
+  position: relative;
+  height: 100%;
+}
+.tl__totals-cell {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--antd-color-text-secondary);
+  white-space: nowrap;
+}
+/* Ticks at the top of the totals row — mirror the ruler ticks. */
+.tl__totals-tick {
+  position: absolute;
+  top: 0;
+  height: 8px;
+  width: 1px;
+  background: var(--antd-color-border);
+}

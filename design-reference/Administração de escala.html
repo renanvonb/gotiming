@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Gotime — Administração de escala</title>
+
+<link rel="stylesheet" href="tokens.css" />
+<link rel="stylesheet" href="app.css" />
+
+<template id="__bundler_thumbnail" data-bg-color="#1677ff">
+  <svg viewBox="0 0 240 160" xmlns="http://www.w3.org/2000/svg">
+    <g fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="40" y="30" width="160" height="100" rx="10"/>
+      <line x1="70" y1="56" x2="130" y2="56"/>
+      <line x1="60" y1="80" x2="120" y2="80"/>
+      <line x1="80" y1="104" x2="170" y2="104"/>
+    </g>
+  </svg>
+</template>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <div id="themeTweaks" class="gt-tweaks gt-tweaks--sidebar">
+    <div class="gt-tweaks__panel" id="tweaksPanel" hidden>
+      <div class="gt-tweaks__head">
+        <span class="gt-tweaks__title">Tweaks</span>
+        <button class="gt-tweaks__close" id="tweaksClose" aria-label="Fechar">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+        </button>
+      </div>
+      <div class="gt-tweaks__body">
+        <div class="gt-tweaks__row">
+          <span class="gt-tweaks__label">Aparência</span>
+          <div class="gt-seg" id="themeSeg">
+            <button class="gt-seg__btn is-active" data-theme="light">Light</button>
+            <button class="gt-seg__btn" data-theme="dark">Dark</button>
+          </div>
+        </div>
+        <div class="gt-tweaks__row">
+          <span class="gt-tweaks__label">Estado das tabelas</span>
+          <div class="gt-seg" id="emptySeg">
+            <button class="gt-seg__btn is-active" data-empty="false">Populado</button>
+            <button class="gt-seg__btn" data-empty="true">Empty</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // tweaksInit (Administração de escala)
+    (function () {
+      function init() {
+        const toggle = document.getElementById('tweaksSidebarBtn');
+        const panel = document.getElementById('tweaksPanel');
+        const closeBtn = document.getElementById('tweaksClose');
+        const themeSeg = document.getElementById('themeSeg');
+        if (!toggle || !panel) { setTimeout(init, 200); return; }
+
+        function position() {
+          const r = toggle.getBoundingClientRect();
+          panel.style.left = (r.right + 8) + 'px';
+          panel.style.bottom = (window.innerHeight - r.bottom) + 'px';
+          panel.style.top = 'auto';
+          panel.style.right = 'auto';
+        }
+        toggle.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (panel.hidden) { position(); panel.hidden = false; }
+          else { panel.hidden = true; }
+        });
+        closeBtn.addEventListener('click', () => { panel.hidden = true; });
+        document.addEventListener('mousedown', (e) => {
+          if (!panel.hidden && !panel.contains(e.target) && !toggle.contains(e.target)) panel.hidden = true;
+        });
+
+        themeSeg.querySelectorAll('.gt-seg__btn').forEach((b) => {
+          b.addEventListener('click', () => {
+            themeSeg.querySelectorAll('.gt-seg__btn').forEach(x => x.classList.remove('is-active'));
+            b.classList.add('is-active');
+            document.documentElement.setAttribute('data-theme', b.dataset.theme === 'dark' ? 'dark' : 'light');
+          });
+        });
+      }
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+      else init();
+    })();
+  </script>
+
+  <script type="text/babel" data-presets="react" src="icons.jsx"></script>
+  <script type="text/babel" data-presets="react" src="ant-select.jsx"></script>
+  <script type="text/babel" data-presets="react" src="tweaks-panel.jsx"></script>
+  <script type="text/babel" data-presets="react" src="app.jsx"></script>
+</body>
+</html>
