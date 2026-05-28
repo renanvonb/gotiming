@@ -15,6 +15,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import dayjs, { type Dayjs } from "dayjs";
 import { getFeriados } from "@/lib/mock/feriados";
+import { DeleteIcon } from "@/components/icons";
 
 interface FeriadoDrawerProps {
   open: boolean;
@@ -26,7 +27,8 @@ interface FeriadoDrawerProps {
 interface FormValues {
   nome: string;
   data: Dayjs;
-  intervalo?: [Dayjs, Dayjs];
+  horaInicial?: Dayjs;
+  horaFinal?: Dayjs;
   fechadoDiaInteiro: boolean;
 }
 
@@ -35,7 +37,7 @@ const FORMAT_TIME = "HH:mm";
 export function FeriadoDrawer({ open, feriadoId, unidadeId, onClose }: FeriadoDrawerProps) {
   const { message } = App.useApp();
   const [form] = Form.useForm<FormValues>();
-  const [fechado, setFechado] = useState(true);
+  const [fechado, setFechado] = useState(false);
 
   const editing = useMemo(() => {
     if (!feriadoId) return null;
@@ -49,27 +51,22 @@ export function FeriadoDrawer({ open, feriadoId, unidadeId, onClose }: FeriadoDr
       form.setFieldsValue({
         nome: editing.nome,
         data: dayjs(editing.data),
-        intervalo: first
-          ? [dayjs(first.inicio, FORMAT_TIME), dayjs(first.fim, FORMAT_TIME)]
-          : undefined,
+        horaInicial: first ? dayjs(first.inicio, FORMAT_TIME) : undefined,
+        horaFinal: first ? dayjs(first.fim, FORMAT_TIME) : undefined,
         fechadoDiaInteiro: !first,
       });
       setFechado(!first);
     } else {
       form.resetFields();
-      form.setFieldsValue({
-        nome: "",
-        data: dayjs(),
-        fechadoDiaInteiro: true,
-      });
-      setFechado(true);
+      form.setFieldsValue({ nome: "", fechadoDiaInteiro: false });
+      setFechado(false);
     }
   }, [open, editing, form]);
 
   const handleSave = async () => {
     try {
       await form.validateFields();
-      message.success(editing ? "Feriado atualizado" : "Feriado criado");
+      message.success(editing ? "Feriado atualizado com sucesso!" : "Feriado adicionado com sucesso!");
       onClose();
     } catch {
       // form
@@ -78,7 +75,7 @@ export function FeriadoDrawer({ open, feriadoId, unidadeId, onClose }: FeriadoDr
 
   return (
     <Drawer
-      title={editing ? "Editar feriado" : "Adicionar feriado"}
+      title={editing ? "Gerenciar feriado" : "Adicionar"}
       open={open}
       onClose={onClose}
       size={420}
@@ -97,7 +94,9 @@ export function FeriadoDrawer({ open, feriadoId, unidadeId, onClose }: FeriadoDr
                 onClose();
               }}
             >
-              <Button danger>Excluir</Button>
+              <Button type="link" danger icon={<DeleteIcon />} style={{ paddingLeft: 0 }}>
+                Excluir
+              </Button>
             </Popconfirm>
           ) : (
             <span />
@@ -115,27 +114,46 @@ export function FeriadoDrawer({ open, feriadoId, unidadeId, onClose }: FeriadoDr
         form={form}
         layout="vertical"
         onValuesChange={(changed) => {
-          if ("fechadoDiaInteiro" in changed) setFechado(changed.fechadoDiaInteiro ?? true);
+          if ("fechadoDiaInteiro" in changed) setFechado(changed.fechadoDiaInteiro ?? false);
         }}
       >
         <Form.Item label="Nome" name="nome" rules={[{ required: true, message: "Nome obrigatório" }]}>
-          <Input placeholder="Ex.: Aniversário da cidade" />
+          <Input placeholder="Informe o nome do feriado" />
         </Form.Item>
         <Form.Item label="Data" name="data" rules={[{ required: true, message: "Data obrigatória" }]}>
-          <DatePicker format="DD/MM/YYYY" style={{ width: "100%" }} />
+          <DatePicker format="DD/MM/YYYY" placeholder="Selecione a data" style={{ width: "100%" }} />
         </Form.Item>
-        <Form.Item name="fechadoDiaInteiro" valuePropName="checked">
+        <div style={{ display: "flex", gap: 12 }}>
+          <Form.Item
+            label="Hora inicial"
+            name="horaInicial"
+            rules={[{ required: !fechado, message: "Obrigatório" }]}
+            style={{ flex: 1 }}
+          >
+            <TimePicker
+              format={FORMAT_TIME}
+              disabled={fechado}
+              placeholder="00:00"
+              style={{ width: "100%" }}
+            />
+          </Form.Item>
+          <Form.Item
+            label="Hora final"
+            name="horaFinal"
+            rules={[{ required: !fechado, message: "Obrigatório" }]}
+            style={{ flex: 1 }}
+          >
+            <TimePicker
+              format={FORMAT_TIME}
+              disabled={fechado}
+              placeholder="00:00"
+              style={{ width: "100%" }}
+            />
+          </Form.Item>
+        </div>
+        <Form.Item name="fechadoDiaInteiro" valuePropName="checked" style={{ marginBottom: 0 }}>
           <Checkbox>Fechado o dia inteiro</Checkbox>
         </Form.Item>
-        {!fechado && (
-          <Form.Item
-            label="Horário de funcionamento"
-            name="intervalo"
-            rules={[{ required: true, message: "Defina o horário" }]}
-          >
-            <TimePicker.RangePicker format={FORMAT_TIME} style={{ width: "100%" }} />
-          </Form.Item>
-        )}
       </Form>
     </Drawer>
   );

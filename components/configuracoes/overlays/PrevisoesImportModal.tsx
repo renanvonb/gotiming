@@ -1,9 +1,8 @@
 "use client";
 
-import { Alert, Button, DatePicker, Modal, Upload, App, Form } from "antd";
-import { InboxIcon } from "@/components/icons";
+import { Button, Modal, Space, Upload, App } from "antd";
 import { useState } from "react";
-import dayjs, { type Dayjs } from "dayjs";
+import { DownloadIcon, ImportIcon } from "@/components/icons";
 
 interface PrevisoesImportModalProps {
   open: boolean;
@@ -12,62 +11,61 @@ interface PrevisoesImportModalProps {
 
 export function PrevisoesImportModal({ open, onClose }: PrevisoesImportModalProps) {
   const { message } = App.useApp();
-  const [mes, setMes] = useState<Dayjs>(() => dayjs());
+  const [fileName, setFileName] = useState<string | null>(null);
+
+  const handleClose = () => {
+    setFileName(null);
+    onClose();
+  };
+
+  const handleImport = () => {
+    message.success("Previsões importadas com sucesso!");
+    handleClose();
+  };
 
   return (
     <Modal
-      title="Importar previsões de venda"
+      title="Importar previsões"
       open={open}
-      onCancel={onClose}
-      okText="Importar"
-      cancelText="Cancelar"
-      onOk={() => {
-        message.success(`Previsões de ${mes.format("MMMM [de] YYYY")} importadas (mock)`);
-        onClose();
-      }}
+      onCancel={handleClose}
       destroyOnHidden
-    >
-      <Alert
-        type="info"
-        showIcon
-        title="Os valores existentes serão substituídos pelos do arquivo."
-        style={{ marginBottom: 16 }}
-      />
-      <Form layout="vertical">
-        <Form.Item label="Mês de referência">
-          <DatePicker
-            picker="month"
-            value={mes}
-            onChange={(d) => d && setMes(d)}
-            format="MMMM [de] YYYY"
-            allowClear={false}
-            style={{ width: "100%" }}
-          />
-        </Form.Item>
-        <Form.Item label="Arquivo">
-          <Upload.Dragger
-            multiple={false}
-            accept=".csv,.xlsx"
-            maxCount={1}
-            showUploadList={false}
-            beforeUpload={(file) => {
-              message.success(`Arquivo "${file.name}" carregado`);
-              return false;
-            }}
+      footer={
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <Button
+            type="link"
+            icon={<DownloadIcon />}
+            style={{ paddingLeft: 0 }}
+            onClick={() => message.info("Template baixado (mock)")}
           >
-            <p className="ant-upload-drag-icon">
-              <InboxIcon />
-            </p>
-            <p className="ant-upload-text">Arraste o CSV/XLSX ou clique</p>
-            <p className="ant-upload-hint">Colunas esperadas: data, valor.</p>
-          </Upload.Dragger>
-        </Form.Item>
-      </Form>
-      <div style={{ display: "flex", justifyContent: "flex-start" }}>
-        <Button type="link" onClick={() => message.info("Modelo baixado (mock)")}>
-          Baixar modelo
-        </Button>
-      </div>
+            Baixar template
+          </Button>
+          <Space style={{ marginLeft: "auto" }}>
+            <Button onClick={handleClose}>Cancelar</Button>
+            <Button type="primary" disabled={!fileName} onClick={handleImport}>
+              Importar
+            </Button>
+          </Space>
+        </div>
+      }
+    >
+      <Upload.Dragger
+        multiple={false}
+        accept=".csv,.xlsx"
+        maxCount={1}
+        showUploadList={false}
+        beforeUpload={(file) => {
+          setFileName(file.name);
+          return false;
+        }}
+      >
+        <p className="ant-upload-drag-icon">
+          <ImportIcon size={48} strokeWidth={1.5} />
+        </p>
+        <p className="ant-upload-text">
+          {fileName ?? "Clique ou arraste o arquivo para esta área"}
+        </p>
+        <p className="ant-upload-hint">Suporta arquivos .csv ou .xlsx — máximo 5MB</p>
+      </Upload.Dragger>
     </Modal>
   );
 }

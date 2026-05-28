@@ -4,23 +4,11 @@ import { unidades } from "@/lib/mock/unidades";
 const DIAS: DiaSemana[] = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
 
 function baseHorarios(): HorarioDia[] {
-  return DIAS.map<HorarioDia>((dia) => {
-    if (dia === "dom") {
-      return { dia, fechado: true, ranges: [] };
-    }
-    if (dia === "sab") {
-      return {
-        dia,
-        fechado: false,
-        ranges: [{ inicio: "09:00", fim: "13:00" }],
-      };
-    }
-    return {
-      dia,
-      fechado: false,
-      ranges: [{ inicio: "08:00", fim: "18:00" }],
-    };
-  });
+  return DIAS.map<HorarioDia>((dia) => ({
+    dia,
+    fechado: true,
+    ranges: [{ inicio: "", fim: "" }],
+  }));
 }
 
 export const horariosPorUnidade: Record<string, HorarioDia[]> = Object.fromEntries(

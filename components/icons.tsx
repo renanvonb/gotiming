@@ -2,7 +2,9 @@ import {
   ArrowLeft,
   Bell,
   CalendarDays,
+  CalendarSearch,
   Check,
+  Eraser,
   ChevronLeft,
   ChevronRight,
   CircleAlert,
@@ -27,11 +29,13 @@ import {
   Settings,
   SlidersHorizontal,
   Star,
+  Store,
   Sun,
   Table as TableIcon,
   Trash2,
   Upload,
   User,
+  WandSparkles,
   Zap,
   type LucideProps,
 } from "lucide-react";
@@ -50,6 +54,7 @@ function withDefaults<P extends LucideProps>(Cmp: ComponentType<P>): ComponentTy
 export const ArrowLeftIcon = withDefaults(ArrowLeft);
 export const BellIcon = withDefaults(Bell);
 export const CalendarIcon = withDefaults(CalendarDays);
+export const CalendarSearchIcon = withDefaults(CalendarSearch);
 export const CheckIcon = withDefaults(Check);
 export const CheckCircleIcon = withDefaults(CircleCheck);
 export const ChevronLeftIcon = withDefaults(ChevronLeft);
@@ -60,6 +65,7 @@ export const ControlIcon = withDefaults(SlidersHorizontal);
 export const DeleteIcon = withDefaults(Trash2);
 export const DownloadIcon = withDefaults(Download);
 export const EditIcon = withDefaults(Pencil);
+export const EraserIcon = withDefaults(Eraser);
 export const ExclamationIcon = withDefaults(CircleAlert);
 export const ExpandIcon = withDefaults(Expand);
 export const FilePdfIcon = withDefaults(FileText);
@@ -77,7 +83,9 @@ export const SaveIcon = withDefaults(Save);
 export const SearchIcon = withDefaults(Search);
 export const SettingsIcon = withDefaults(Settings);
 export const StarIcon = withDefaults(Star);
+export const StoreIcon = withDefaults(Store);
 export const SunIcon = withDefaults(Sun);
 export const TableIconRe = withDefaults(TableIcon);
 export const ThunderIcon = withDefaults(Zap);
 export const UserIcon = withDefaults(User);
+export const WandIcon = withDefaults(WandSparkles);

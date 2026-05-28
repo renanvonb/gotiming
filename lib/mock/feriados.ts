@@ -1,31 +1,36 @@
-import type { Feriado } from "@/lib/types";
+import type { Feriado, HorarioRange } from "@/lib/types";
 import { unidades } from "@/lib/mock/unidades";
 
+type Seed = {
+  slug: string;
+  nome: string;
+  data: string;
+  abertura?: HorarioRange[];
+};
+
+const SEED: Seed[] = [
+  { slug: "ano-novo", nome: "Ano Novo", data: "2026-01-01" },
+  { slug: "carnaval", nome: "Carnaval", data: "2026-02-17", abertura: [{ inicio: "10:00", fim: "18:00" }] },
+  { slug: "sexta-santa", nome: "Sexta-feira Santa", data: "2026-04-03", abertura: [{ inicio: "08:00", fim: "20:00" }] },
+  { slug: "tiradentes", nome: "Tiradentes", data: "2026-04-21", abertura: [{ inicio: "08:00", fim: "22:00" }] },
+  { slug: "trabalho", nome: "Dia do Trabalho", data: "2026-05-01", abertura: [{ inicio: "10:00", fim: "16:00" }] },
+  { slug: "corpus", nome: "Corpus Christi", data: "2026-06-04", abertura: [{ inicio: "10:00", fim: "18:00" }] },
+  { slug: "independencia", nome: "Independência", data: "2026-09-07", abertura: [{ inicio: "08:00", fim: "22:00" }] },
+  { slug: "aparecida", nome: "Nossa Sra Aparecida", data: "2026-10-12" },
+  { slug: "finados", nome: "Finados", data: "2026-11-02", abertura: [{ inicio: "10:00", fim: "18:00" }] },
+  { slug: "proclamacao", nome: "Proclamação", data: "2026-11-15", abertura: [{ inicio: "08:00", fim: "22:00" }] },
+  { slug: "natal", nome: "Natal", data: "2026-12-25" },
+];
+
 function baseFeriados(unidadeId: string): Feriado[] {
-  return [
-    {
-      id: `${unidadeId}-fer-natal`,
-      unidadeId,
-      nome: "Natal",
-      data: "2026-12-25",
-      tipo: "nacional",
-    },
-    {
-      id: `${unidadeId}-fer-ano-novo`,
-      unidadeId,
-      nome: "Confraternização Universal",
-      data: "2026-01-01",
-      tipo: "nacional",
-    },
-    {
-      id: `${unidadeId}-fer-corpus`,
-      unidadeId,
-      nome: "Corpus Christi",
-      data: "2026-06-04",
-      tipo: "nacional",
-      abertura: [{ inicio: "10:00", fim: "16:00" }],
-    },
-  ];
+  return SEED.map<Feriado>((s) => ({
+    id: `${unidadeId}-fer-${s.slug}`,
+    unidadeId,
+    nome: s.nome,
+    data: s.data,
+    tipo: "nacional",
+    abertura: s.abertura,
+  }));
 }
 
 export const feriadosPorUnidade: Record<string, Feriado[]> = Object.fromEntries(
@@ -36,29 +41,34 @@ export function getFeriados(unidadeId: string): Feriado[] {
   return feriadosPorUnidade[unidadeId] ?? [];
 }
 
+export type FeriadoNacionalKind =
+  | "Feriado Nacional"
+  | "Ponto Facultativo"
+  | "Data Comemorativa"
+  | "Jogo da Seleção Brasileira";
+
 export type FeriadoNacionalImport = {
   id: string;
   nome: string;
-  data: string;
-  tipo: "nacional" | "estadual" | "municipal" | "evento";
+  data: string; // ISO date
+  kind: FeriadoNacionalKind;
 };
 
 export const feriadosNacionais2026: FeriadoNacionalImport[] = [
-  { id: "ano-novo-2026", nome: "Confraternização Universal", data: "2026-01-01", tipo: "nacional" },
-  { id: "carnaval-2026-1", nome: "Carnaval (segunda)", data: "2026-02-16", tipo: "nacional" },
-  { id: "carnaval-2026-2", nome: "Carnaval (terça)", data: "2026-02-17", tipo: "nacional" },
-  { id: "sexta-santa-2026", nome: "Sexta-feira Santa", data: "2026-04-03", tipo: "nacional" },
-  { id: "pascoa-2026", nome: "Páscoa", data: "2026-04-05", tipo: "evento" },
-  { id: "tiradentes-2026", nome: "Tiradentes", data: "2026-04-21", tipo: "nacional" },
-  { id: "trabalho-2026", nome: "Dia do Trabalhador", data: "2026-05-01", tipo: "nacional" },
-  { id: "maes-2026", nome: "Dia das Mães", data: "2026-05-10", tipo: "evento" },
-  { id: "corpus-2026", nome: "Corpus Christi", data: "2026-06-04", tipo: "nacional" },
-  { id: "namorados-2026", nome: "Dia dos Namorados", data: "2026-06-12", tipo: "evento" },
-  { id: "copa-2026-abertura", nome: "Copa FIFA — abertura", data: "2026-06-11", tipo: "evento" },
-  { id: "copa-2026-final", nome: "Copa FIFA — final", data: "2026-07-19", tipo: "evento" },
-  { id: "independencia-2026", nome: "Independência", data: "2026-09-07", tipo: "nacional" },
-  { id: "aparecida-2026", nome: "Nossa Senhora Aparecida", data: "2026-10-12", tipo: "nacional" },
-  { id: "finados-2026", nome: "Finados", data: "2026-11-02", tipo: "nacional" },
-  { id: "proclamacao-2026", nome: "Proclamação da República", data: "2026-11-15", tipo: "nacional" },
-  { id: "natal-2026", nome: "Natal", data: "2026-12-25", tipo: "nacional" },
+  { id: "ano-novo-2026", nome: "Confraternização Universal", data: "2026-01-01", kind: "Feriado Nacional" },
+  { id: "carnaval-2026", nome: "Carnaval", data: "2026-02-17", kind: "Ponto Facultativo" },
+  { id: "sexta-santa-2026", nome: "Sexta-feira Santa", data: "2026-04-03", kind: "Feriado Nacional" },
+  { id: "pascoa-2026", nome: "Páscoa", data: "2026-04-05", kind: "Data Comemorativa" },
+  { id: "tiradentes-2026", nome: "Tiradentes", data: "2026-04-21", kind: "Feriado Nacional" },
+  { id: "trabalho-2026", nome: "Dia do Trabalho", data: "2026-05-01", kind: "Feriado Nacional" },
+  { id: "corpus-2026", nome: "Corpus Christi", data: "2026-06-04", kind: "Ponto Facultativo" },
+  { id: "fifa-marrocos-2026", nome: "Jogo Brasil × Marrocos — Copa do Mundo FIFA 2026", data: "2026-06-13", kind: "Jogo da Seleção Brasileira" },
+  { id: "fifa-haiti-2026", nome: "Jogo Brasil × Haiti — Copa do Mundo FIFA 2026", data: "2026-06-19", kind: "Jogo da Seleção Brasileira" },
+  { id: "fifa-escocia-2026", nome: "Jogo Brasil × Escócia — Copa do Mundo FIFA 2026", data: "2026-06-24", kind: "Jogo da Seleção Brasileira" },
+  { id: "independencia-2026", nome: "Independência do Brasil", data: "2026-09-07", kind: "Feriado Nacional" },
+  { id: "aparecida-2026", nome: "Nossa Senhora Aparecida", data: "2026-10-12", kind: "Feriado Nacional" },
+  { id: "finados-2026", nome: "Finados", data: "2026-11-02", kind: "Feriado Nacional" },
+  { id: "proclamacao-2026", nome: "Proclamação da República", data: "2026-11-15", kind: "Feriado Nacional" },
+  { id: "consciencia-2026", nome: "Dia Nacional de Zumbi e da Consciência Negra", data: "2026-11-20", kind: "Feriado Nacional" },
+  { id: "natal-2026", nome: "Natal", data: "2026-12-25", kind: "Feriado Nacional" },
 ];

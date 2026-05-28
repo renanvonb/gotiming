@@ -5,27 +5,27 @@ function baseParametros(unidadeId: string): Parametros {
   return {
     unidadeId,
     jornada: {
-      modelo: "8h",
-      minutosAntes: 20,
-      minutosDepois: 20,
+      contratoMode: "combinado",
+      contratos: [
+        { tipo: "7:20", horasSemana: 36, habilitado: true, pct: 30 },
+        { tipo: "6:00", horasSemana: 30, habilitado: true, pct: 40 },
+        { tipo: "5:00", horasSemana: 25, habilitado: true, pct: 30 },
+        { tipo: "4:00", horasSemana: 20, habilitado: false, pct: 0 },
+      ],
+      intervaloPre: true,
+      intervaloPos: false,
       acordoAtual: {
-        id: `${unidadeId}-acordo-2026`,
-        nome: "Acordo Coletivo 2026 - Sindicato dos Comerciários.pdf",
-        dataUpload: "2026-01-18",
+        id: `${unidadeId}-acordo-2025`,
+        nome: "acordo-2025.pdf",
+        dataUpload: "2025-03-12",
         uploadPor: "Marco Santana",
       },
       acordosHistorico: [
         {
-          id: `${unidadeId}-acordo-2025`,
-          nome: "Acordo Coletivo 2025.pdf",
-          dataUpload: "2025-02-04",
-          uploadPor: "Marco Santana",
-        },
-        {
           id: `${unidadeId}-acordo-2024`,
-          nome: "Acordo Coletivo 2024.pdf",
-          dataUpload: "2024-02-10",
-          uploadPor: "Larissa Camargo",
+          nome: "acordo-2024.pdf",
+          dataUpload: "2024-03-10",
+          uploadPor: "Bruno Colato",
         },
       ],
     },
@@ -36,13 +36,13 @@ function baseParametros(unidadeId: string): Parametros {
       janelaInicioMax: "14:00",
     },
     folgas: {
-      diasFechados: ["dom"],
-      folgaDomingoFrequencia: "1-em-4",
+      diasFolga: ["dom"],
+      aosDomingos: "1x1",
     },
     tolerancia: {
-      pdvMinimo: 3,
-      nivelServicoPct: 92,
-      absenteismoPct: 6,
+      pdvMinimo: 2,
+      nivelServicoPct: 90,
+      absenteismoPct: 5,
     },
   };
 }

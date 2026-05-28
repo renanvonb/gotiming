@@ -1,17 +1,15 @@
 "use client";
 
-import { Drawer, Empty, Segmented, Space } from "antd";
+import { Drawer, Empty, Segmented } from "antd";
+import type { CSSProperties } from "react";
 import {
   CalendarIcon,
-  ClockIcon,
   MoonIcon,
   SettingsIcon,
-  StarIcon,
   SunIcon,
   TableIconRe,
 } from "@/components/icons";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Link, useLocation } from "react-router-dom";
 import type { SidebarMenuKey } from "@/components/shell/Sidebar";
 import { useThemeMode } from "@/components/providers/ThemeProvider";
 
@@ -37,17 +35,8 @@ const MODULOS = [
   { href: "/configuracoes", label: "Configurações", icon: <SettingsIcon /> },
 ];
 
-const FAVORITOS = [
-  { href: "/configuracoes", label: "Configurações", icon: <StarIcon /> },
-];
-
-const HISTORICO = [
-  { href: "/configuracoes", label: "Configurações", icon: <ClockIcon /> },
-  { href: "/escalas", label: "Lista de escalas", icon: <ClockIcon /> },
-];
-
 export function SideMenu({ active, onClose }: SideMenuProps) {
-  const pathname = usePathname();
+  const pathname = useLocation().pathname;
   const open = active !== null;
   const title = active ? TITLES[active] : "";
 
@@ -57,19 +46,19 @@ export function SideMenu({ active, onClose }: SideMenuProps) {
       placement="left"
       open={open}
       onClose={onClose}
-      size={284 + 56}
+      rootClassName="gt-sidemenu"
+      width={56 + 284}
+      zIndex={99}
       mask
       maskClosable
       keyboard
       styles={{
         wrapper: { boxShadow: "var(--ant-box-shadow)" },
-        body: { paddingLeft: 56, padding: 8 },
-        header: { paddingLeft: 56 + 16 },
+        body: { padding: 8, paddingLeft: 56 + 8 },
+        header: { paddingLeft: 56 + 16, paddingRight: 16 },
         mask: { left: 56 },
       }}
-      rootStyle={{ left: 56 }}
       getContainer={false}
-      classNames={{ wrapper: "gt-sidemenu-wrapper" }}
     >
       <MenuBody active={active} pathname={pathname} onClose={onClose} />
     </Drawer>
@@ -89,17 +78,17 @@ function MenuBody({ active, pathname, onClose }: MenuBodyProps) {
     case "modulos":
       return <MenuList items={MODULOS} pathname={pathname} onClose={onClose} />;
     case "favoritos":
-      return <MenuList items={FAVORITOS} pathname={pathname} onClose={onClose} />;
+      return <EmptyState description="Nenhum favorito ainda" />;
     case "historico":
-      return <MenuList items={HISTORICO} pathname={pathname} onClose={onClose} />;
+      return <EmptyState description="Nenhum acesso recente" />;
     case "notificacoes":
-      return <EmptyState description="Sem notificações" />;
+      return <EmptyState description="Nenhuma notificação" />;
     case "tweaks":
-      return <EmptyState description="Painel de tweaks (em breve)" />;
+      return <TweaksMenu />;
     case "solucoes":
-      return <EmptyState description="Outras soluções Goapice" />;
+      return <EmptyState description="Nenhuma solução disponível" />;
     case "configuracoes":
-      return <MenuList items={[{ href: "/configuracoes", label: "Abrir Configurações", icon: <SettingsIcon /> }]} pathname={pathname} onClose={onClose} />;
+      return <EmptyState description="Sem itens" />;
     case "usuario":
       return <UsuarioMenu />;
     default:
@@ -121,7 +110,7 @@ function MenuList({ items, pathname, onClose }: { items: MenuListItem[]; pathnam
         return (
           <Link
             key={href + label}
-            href={href}
+            to={href}
             onClick={onClose}
             style={{
               display: "flex",
@@ -152,42 +141,47 @@ function EmptyState({ description }: { description: string }) {
   );
 }
 
-function UsuarioMenu() {
+const tweaksStyles: Record<string, CSSProperties> = {
+  row: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    padding: "12px 16px",
+  },
+  label: {
+    fontSize: 14,
+    color: "var(--ant-color-text)",
+  },
+};
+
+function TweaksMenu() {
   const { mode, setMode } = useThemeMode();
   return (
-    <div style={{ padding: 16 }}>
-      <Space orientation="vertical" size={16} style={{ width: "100%" }}>
-        <div>
-          <div
-            style={{
-              fontSize: 12,
-              textTransform: "uppercase",
-              letterSpacing: 0.04,
-              color: "var(--ant-color-text-tertiary)",
-              marginBottom: 8,
-            }}
-          >
-            Tema
-          </div>
-          <Segmented
-            block
-            value={mode}
-            onChange={(v) => setMode(v as "light" | "dark")}
-            options={[
-              { value: "light", label: "Claro", icon: <SunIcon /> },
-              { value: "dark", label: "Escuro", icon: <MoonIcon /> },
-            ]}
-          />
-        </div>
-        <div
-          style={{
-            color: "var(--ant-color-text-tertiary)",
-            fontSize: 12,
-          }}
-        >
-          renanborstel@goapice.com
-        </div>
-      </Space>
+    <div style={tweaksStyles.row}>
+      <span style={tweaksStyles.label}>Aparência</span>
+      <Segmented
+        value={mode}
+        onChange={(v) => setMode(v as "light" | "dark")}
+        options={[
+          { value: "light", label: "Claro", icon: <SunIcon /> },
+          { value: "dark", label: "Escuro", icon: <MoonIcon /> },
+        ]}
+      />
+    </div>
+  );
+}
+
+function UsuarioMenu() {
+  return (
+    <div
+      style={{
+        padding: 16,
+        color: "var(--ant-color-text-tertiary)",
+        fontSize: 13,
+      }}
+    >
+      renanborstel@goapice.com
     </div>
   );
 }

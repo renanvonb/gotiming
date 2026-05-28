@@ -1,0 +1,210 @@
+/* ============================================================
+   Gotime — globals.css (residual)
+   Estilo é 100% inline (React.CSSProperties). Este arquivo
+   guarda apenas o que não dá para inline:
+   - tokens de marca/layout em :root (referenciados via var())
+   - overrides de token por tema (data-theme="dark")
+   - reset mínimo
+   - .is-disabled td (AntD gera o <tr>/<td>; alcançado via rowClassName)
+   AntD em modo cssVar publica seus tokens como --ant-*.
+   ============================================================ */
+
+:root {
+  --goapice-brand-blue: #1375fa;
+  --goapice-brand-navy: #001b61;
+
+  --sidebar-width: 56px;
+  --content-pad-top: 0px;
+  --content-pad-left: 24px;
+  --content-pad-right: 24px;
+  --content-pad-bottom: 24px;
+
+  --side-block-width: 261px;
+  --block-gap: 0px;
+  --header-height: 64px;
+
+  --gt-trabalha-bg: rgba(22, 119, 255, 0.08);
+  --gt-trabalha-fg: #0958d9;
+  --gt-trabalha-bg-hover: rgba(22, 119, 255, 0.16);
+  --gt-intervalo-bg: rgba(250, 173, 20, 0.1);
+  --gt-intervalo-fg: #d48806;
+  --gt-intervalo-bg-hover: rgba(250, 173, 20, 0.2);
+  --gt-top-h: 100px;
+  --gt-row-h: 64px;
+  --gt-footer-h: 44px;
+
+  --gt-avatar-bg-red: #fff1f0;
+  --gt-avatar-bg-orange: #fff7e6;
+  --gt-avatar-bg-gold: #fffbe6;
+  --gt-avatar-bg-green: #f6ffed;
+  --gt-avatar-bg-cyan: #e6fffb;
+  --gt-avatar-bg-blue: #e6f4ff;
+  --gt-avatar-bg-purple: #f9f0ff;
+  --gt-avatar-bg-magenta: #fff0f6;
+  --gt-avatar-bg-gray: #f5f5f5;
+}
+
+[data-theme="dark"] {
+  --gt-trabalha-bg: rgba(22, 119, 255, 0.14);
+  --gt-trabalha-fg: var(--ant-blue-4);
+  --gt-trabalha-bg-hover: rgba(22, 119, 255, 0.24);
+  --gt-intervalo-bg: rgba(250, 173, 20, 0.14);
+  --gt-intervalo-fg: #fadb14;
+  --gt-intervalo-bg-hover: rgba(250, 173, 20, 0.24);
+
+  --gt-avatar-bg-red: #2a1215;
+  --gt-avatar-bg-orange: #2b1d11;
+  --gt-avatar-bg-gold: #2b2111;
+  --gt-avatar-bg-green: #162312;
+  --gt-avatar-bg-cyan: #112123;
+  --gt-avatar-bg-blue: #111a2c;
+  --gt-avatar-bg-purple: #1a1325;
+  --gt-avatar-bg-magenta: #291321;
+  --gt-avatar-bg-gray: #262626;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--ant-font-family);
+  font-size: var(--ant-font-size);
+  line-height: var(--ant-line-height);
+  color: var(--ant-color-text);
+  background: var(--ant-color-bg-container);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Oculta as barras de rolagem em todo o app, mantendo o scroll funcional. */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge legacy */
+}
+*::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none; /* WebKit/Blink */
+}
+
+.is-disabled td {
+  color: var(--ant-color-text-quaternary);
+}
+
+/* Esconde scrollbars mantendo o scroll (timeline + lista de colaboradores). */
+.gt-no-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+.gt-no-scrollbar::-webkit-scrollbar {
+  display: none; /* WebKit */
+  width: 0;
+  height: 0;
+}
+
+/* Sombras de borda indicando conteúdo rolado horizontalmente na timeline. */
+.tl-scroll-shadow::before,
+.tl-scroll-shadow::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 12px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--ant-motion-duration-mid) var(--ant-motion-ease-out);
+  z-index: 8;
+}
+.tl-scroll-shadow::before {
+  left: 0;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.1), transparent);
+}
+.tl-scroll-shadow::after {
+  right: 0;
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.1), transparent);
+}
+.tl-scroll-shadow.is-scrolled-x::before,
+.tl-scroll-shadow.is-scrolled-x::after {
+  opacity: 1;
+}
+
+/* Tabelas no conteúdo: a moldura (1px, raio 2px) fica no contêiner rolável de
+   altura total (.gt-table-frame), permanecendo sempre visível na rolagem vertical.
+   As bordas externas que o AntD desenha (topo/esquerda do container e direita da
+   última coluna) são removidas para não duplicar; as linhas internas da grade
+   permanecem. Usamos !important porque o AntD injeta seletores muito específicos
+   em tempo de execução, que vencem por ordem de origem. */
+.gt-table-frame {
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 2px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+/* A tabela preenche toda a altura da moldura: a cadeia de wrappers do AntD
+   (wrapper → spin → container → table) vira coluna flex e o corpo rolável é o
+   item que cresce, ocupando o espaço vertical inteiro. Assim não sobra área
+   morta abaixo das linhas quando há poucos registros, e a rolagem fica apenas
+   no corpo (as linhas), com o cabeçalho fixo no topo. */
+.gt-table-frame .ant-table-wrapper,
+.gt-table-frame .ant-spin,
+.gt-table-frame .ant-spin-container,
+.gt-table-frame .ant-table,
+.gt-table-frame .ant-table-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.gt-table-frame .ant-table-wrapper,
+.gt-table-frame .ant-spin,
+.gt-table-frame .ant-spin-container,
+.gt-table-frame .ant-table,
+.gt-table-frame .ant-table-container,
+.gt-table-frame .ant-table-body {
+  flex: 1 1 auto;
+}
+/* O cabeçalho fixo mantém a altura natural (não encolhe na coluna flex); só o
+   corpo cresce/rola. Sem isto, muitas linhas espremem o cabeçalho. */
+.gt-table-frame .ant-table-header {
+  flex: 0 0 auto;
+}
+.gt-table-frame .ant-table {
+  border-radius: 0 !important;
+}
+.gt-table-frame .ant-table-container {
+  border-block-start: 0 !important;
+  border-inline-start: 0 !important;
+  border-start-start-radius: 0 !important;
+  border-start-end-radius: 0 !important;
+}
+.gt-table-frame .ant-table-thead > tr > th.ant-table-cell-scrollbar {
+  display: none;
+}
+.gt-table-frame .ant-table-thead > tr > th:last-child,
+.gt-table-frame .ant-table-thead > tr > th:has(+ th.ant-table-cell-scrollbar),
+.gt-table-frame .ant-table-tbody > tr > td:last-child {
+  border-inline-end: 0 !important;
+}
+/* A base do quadro é desenhada uma única vez pela moldura; remover a borda
+   inferior da última linha evita a linha duplicada que aparecia acima do
+   espaço vazio quando o corpo não estava cheio. */
+.gt-table-frame .ant-table-tbody > tr:last-child > td {
+  border-block-end: 0 !important;
+}
+
+/* SideMenu: título alinhado ao início (flex:1) e botão de fechar à direita,
+   conforme o protótipo (o padrão do AntD coloca o "X" à esquerda do título). */
+.gt-sidemenu .ant-drawer-header-title {
+  flex-direction: row-reverse;
+}

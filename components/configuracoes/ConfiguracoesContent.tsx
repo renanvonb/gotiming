@@ -2,7 +2,8 @@
 
 import { Tabs } from "antd";
 import { useReducer, useEffect, useMemo, useCallback } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import type { CSSProperties } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AppShell } from "@/components/shell/AppShell";
 import { Header } from "@/components/shell/Header";
 import { UnitsPane } from "@/components/configuracoes/UnitsPane";
@@ -27,9 +28,79 @@ import { ImportPdvModal } from "@/components/configuracoes/overlays/ImportPdvMod
 import { FolgasModal } from "@/components/configuracoes/overlays/FolgasModal";
 import { PrevisoesImportModal } from "@/components/configuracoes/overlays/PrevisoesImportModal";
 
+const styles: Record<string, CSSProperties> = {
+  content: {
+    flex: 1,
+    padding:
+      "var(--content-pad-top) var(--content-pad-right) var(--content-pad-bottom) var(--content-pad-left)",
+    minWidth: 0,
+    minHeight: 0,
+    position: "relative",
+    overflow: "hidden",
+  },
+  blocks: {
+    display: "flex",
+    alignItems: "stretch",
+    gap: 16,
+    height: "100%",
+    minHeight: 0,
+  },
+  paneLeft: {
+    display: "flex",
+    minWidth: 0,
+    minHeight: 0,
+    flex: "0 0 261px",
+    width: 261,
+    borderRadius: 4,
+    transition:
+      "width var(--ant-motion-duration-mid) var(--ant-motion-ease-out), flex-basis var(--ant-motion-duration-mid) var(--ant-motion-ease-out)",
+    willChange: "width",
+  },
+  paneLeftCollapsed: {
+    width: 56,
+    flex: "0 0 56px",
+  },
+  paneRight: {
+    display: "flex",
+    minWidth: 0,
+    minHeight: 0,
+    flex: "1 1 auto",
+    borderRadius: 4,
+  },
+  block: {
+    background: "var(--ant-color-bg-container)",
+    border: "1px solid var(--ant-color-border-secondary)",
+    borderRadius: 4,
+    padding: 0,
+    minHeight: 0,
+    display: "flex",
+    flexDirection: "column",
+    position: "relative",
+    overflow: "hidden",
+    flex: 1,
+  },
+  cfgContent: {
+    flex: 1,
+    padding: 0,
+    display: "flex",
+    flexDirection: "column",
+    minHeight: 0,
+    overflow: "auto",
+  },
+  cfgHead: {
+    padding: "16px 16px 4px",
+  },
+  cfgTitle: {
+    margin: 0,
+    fontSize: 14,
+    fontWeight: 600,
+    lineHeight: "24px",
+    color: "var(--ant-color-text)",
+  },
+};
+
 export function ConfiguracoesContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const initialUnidade = useMemo(() => {
     const fromUrl = searchParams.get("unidade");
@@ -53,13 +124,14 @@ export function ConfiguracoesContent() {
     params.set("area", state.areaAtiva);
     const next = params.toString();
     if (next !== searchParams.toString()) {
-      router.replace(`/configuracoes?${next}`, { scroll: false });
+      setSearchParams(params, { replace: true });
     }
-  }, [state.unidadeAtivaId, state.areaAtiva, router, searchParams]);
+  }, [state.unidadeAtivaId, state.areaAtiva, setSearchParams, searchParams]);
 
   const closeOverlay = useCallback(() => dispatch({ type: "close-overlay" }), []);
 
   const tabItems = AREAS.map((a) => ({ key: a.key, label: a.label }));
+  const unidadeAtiva = unidades.find((u) => u.id === state.unidadeAtivaId);
 
   return (
     <AppShell>
@@ -69,9 +141,14 @@ export function ConfiguracoesContent() {
         favorited={false}
         onToggleFavorite={() => {}}
       />
-      <div className="gt-content">
-        <div className="gt-blocks gt-blocks--B is-cfg">
-          <div className={`gt-pane-left${state.unidadesColapsadas ? " is-collapsed" : ""}`}>
+      <div style={styles.content}>
+        <div style={styles.blocks}>
+          <div
+            style={{
+              ...styles.paneLeft,
+              ...(state.unidadesColapsadas ? styles.paneLeftCollapsed : null),
+            }}
+          >
             <UnitsPane
               unidades={unidades}
               ativaId={state.unidadeAtivaId}
@@ -82,8 +159,11 @@ export function ConfiguracoesContent() {
               onToggleColapsada={() => dispatch({ type: "toggle-unidades-colapsadas" })}
             />
           </div>
-          <div className="gt-pane-right">
-            <section className="gt-block" style={{ padding: 0 }}>
+          <div style={styles.paneRight}>
+            <section style={styles.block}>
+              <div style={styles.cfgHead}>
+                <h2 style={styles.cfgTitle}>{unidadeAtiva?.nome ?? ""}</h2>
+              </div>
               <Tabs
                 activeKey={state.areaAtiva}
                 onChange={(key) =>
@@ -95,12 +175,15 @@ export function ConfiguracoesContent() {
                 items={tabItems}
                 tabBarStyle={{ paddingLeft: 16, paddingRight: 16, marginBottom: 0 }}
               />
-              <div className="cfg__content">
+              <div style={styles.cfgContent}>
                 {state.areaAtiva === "colaboradores" && (
                   <ColaboradoresPanel
                     unidadeId={state.unidadeAtivaId}
                     onOpenColab={(colabId) =>
                       dispatch({ type: "open-overlay", overlay: { kind: "colab-drawer", colabId } })
+                    }
+                    onImportFolgas={() =>
+                      dispatch({ type: "open-overlay", overlay: { kind: "folgas-modal" } })
                     }
                   />
                 )}
@@ -134,10 +217,7 @@ export function ConfiguracoesContent() {
                   />
                 )}
                 {state.areaAtiva === "parametros" && (
-                  <ParametrosPanel
-                    unidadeId={state.unidadeAtivaId}
-                    onOpenFolgas={() => dispatch({ type: "open-overlay", overlay: { kind: "folgas-modal" } })}
-                  />
+                  <ParametrosPanel unidadeId={state.unidadeAtivaId} />
                 )}
               </div>
             </section>
@@ -171,11 +251,7 @@ export function ConfiguracoesContent() {
         open={state.overlay.kind === "import-pdv-modal"}
         onClose={closeOverlay}
       />
-      <FolgasModal
-        open={state.overlay.kind === "folgas-modal"}
-        unidadeId={state.unidadeAtivaId}
-        onClose={closeOverlay}
-      />
+      <FolgasModal open={state.overlay.kind === "folgas-modal"} onClose={closeOverlay} />
       <PrevisoesImportModal
         open={state.overlay.kind === "previsoes-import-modal"}
         onClose={closeOverlay}

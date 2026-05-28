@@ -1,8 +1,8 @@
 "use client";
 
-import { Alert, Button, Drawer, Form, Input, InputNumber, Select, Space, Switch, App } from "antd";
+import { Alert, Button, Divider, Drawer, Form, Input, InputNumber, Select, Space, Switch, App } from "antd";
 import { useEffect, useMemo } from "react";
-import type { PdvTipo } from "@/lib/types";
+import type { PdvOrientacao, PdvTipo } from "@/lib/types";
 import { getPdvs } from "@/lib/mock/pdvs";
 
 interface PdvDrawerProps {
@@ -17,7 +17,7 @@ interface FormValues {
   ordem: number;
   codigoInterno: string;
   tipo: PdvTipo;
-  orientacao: "horario" | "anti-horario";
+  orientacao: PdvOrientacao;
   ativoParaEscala: boolean;
 }
 
@@ -34,11 +34,11 @@ export function PdvDrawer({ open, pdvId, unidadeId, onClose }: PdvDrawerProps) {
     if (!open) return;
     if (editing) {
       form.setFieldsValue({
-        posicao: Number(editing.nome.replace(/\D/g, "")) || 1,
-        ordem: Number(editing.nome.replace(/\D/g, "")) || 1,
-        codigoInterno: editing.id.toUpperCase(),
+        posicao: editing.posicao,
+        ordem: editing.ordemAbertura,
+        codigoInterno: editing.codigoInterno,
         tipo: editing.tipo,
-        orientacao: "horario",
+        orientacao: editing.orientacao,
         ativoParaEscala: editing.ativoParaEscala,
       });
     } else {
@@ -48,7 +48,7 @@ export function PdvDrawer({ open, pdvId, unidadeId, onClose }: PdvDrawerProps) {
         ordem: 1,
         codigoInterno: "",
         tipo: "Normal",
-        orientacao: "horario",
+        orientacao: "Direita",
         ativoParaEscala: true,
       });
     }
@@ -66,7 +66,7 @@ export function PdvDrawer({ open, pdvId, unidadeId, onClose }: PdvDrawerProps) {
 
   return (
     <Drawer
-      title={editing ? `Gerenciar ${editing.nome}` : "Novo PDV"}
+      title={editing ? `Gerenciar PDV ${String(editing.posicao).padStart(2, "0")}` : "Novo PDV"}
       open={open}
       onClose={onClose}
       size={420}
@@ -75,47 +75,72 @@ export function PdvDrawer({ open, pdvId, unidadeId, onClose }: PdvDrawerProps) {
         <Space style={{ width: "100%", justifyContent: "flex-end" }}>
           <Button onClick={onClose}>Cancelar</Button>
           <Button type="primary" onClick={handleSave}>
-            Salvar
+            {editing ? "Salvar" : "Cadastrar"}
           </Button>
         </Space>
       }
     >
-      <Alert
-        type="info"
-        showIcon
-        title="Para alterar o nome do PDV use o sistema de checkout."
-        style={{ marginBottom: 16 }}
-      />
       <Form<FormValues> form={form} layout="vertical">
-        <Form.Item label="Posição" name="posicao" rules={[{ required: true }]}>
-          <InputNumber min={1} max={999} style={{ width: "100%" }} />
-        </Form.Item>
-        <Form.Item label="Ordem" name="ordem" rules={[{ required: true }]}>
-          <InputNumber min={1} max={999} style={{ width: "100%" }} />
-        </Form.Item>
+        <div style={{ display: "flex", gap: 12 }}>
+          <Form.Item
+            label="Posição"
+            name="posicao"
+            rules={[{ required: true }]}
+            style={{ flex: 1 }}
+          >
+            <InputNumber min={1} max={999} placeholder="Informe a posição" style={{ width: "100%" }} />
+          </Form.Item>
+          <Form.Item
+            label="Ordem de abertura"
+            name="ordem"
+            rules={[{ required: true }]}
+            style={{ flex: 1 }}
+          >
+            <InputNumber min={1} max={999} placeholder="Informe a ordem" style={{ width: "100%" }} />
+          </Form.Item>
+        </div>
         <Form.Item label="Código interno" name="codigoInterno">
-          <Input placeholder="Ex.: PDV-001" />
+          <Input placeholder="Informe o código" />
         </Form.Item>
-        <Form.Item label="Tipo" name="tipo" rules={[{ required: true }]}>
-          <Select
-            options={[
-              { value: "Normal", label: "Normal" },
-              { value: "Rápido", label: "Rápido" },
-              { value: "Preferencial", label: "Preferencial" },
-            ]}
-          />
-        </Form.Item>
-        <Form.Item label="Orientação" name="orientacao" rules={[{ required: true }]}>
-          <Select
-            options={[
-              { value: "horario", label: "Sentido horário" },
-              { value: "anti-horario", label: "Sentido anti-horário" },
-            ]}
-          />
-        </Form.Item>
-        <Form.Item label="Ativo para escala" name="ativoParaEscala" valuePropName="checked">
-          <Switch />
-        </Form.Item>
+        <Alert
+          type="info"
+          showIcon
+          title="Certifique-se de que o código interno do PDV seja igual ao ERP."
+          style={{ marginBottom: 24 }}
+        />
+        <div style={{ display: "flex", gap: 12 }}>
+          <Form.Item label="Tipo" name="tipo" rules={[{ required: true }]} style={{ flex: 1 }}>
+            <Select
+              placeholder="Selecione o tipo"
+              options={[
+                { value: "Normal", label: "Normal" },
+                { value: "Rápido", label: "Rápido" },
+                { value: "Preferencial", label: "Preferencial" },
+              ]}
+            />
+          </Form.Item>
+          <Form.Item
+            label="Orientação"
+            name="orientacao"
+            rules={[{ required: true }]}
+            style={{ flex: 1 }}
+          >
+            <Select
+              placeholder="Selecione a orientação"
+              options={[
+                { value: "Direita", label: "Direita" },
+                { value: "Esquerda", label: "Esquerda" },
+              ]}
+            />
+          </Form.Item>
+        </div>
+        <Divider />
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <span>Disponível na próxima geração de escala</span>
+          <Form.Item name="ativoParaEscala" valuePropName="checked" noStyle>
+            <Switch size="small" />
+          </Form.Item>
+        </div>
       </Form>
     </Drawer>
   );

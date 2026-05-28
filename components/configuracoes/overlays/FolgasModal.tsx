@@ -1,122 +1,71 @@
 "use client";
 
-import { Button, DatePicker, Modal, Table, type TableColumnsType, App } from "antd";
-import { PlusIcon } from "@/components/icons";
-import dayjs, { type Dayjs } from "dayjs";
-import { useEffect, useMemo, useState } from "react";
-import { getColaboradores } from "@/lib/mock/colaboradores";
+import { Button, Modal, Space, Upload, App } from "antd";
+import { useState } from "react";
+import { DownloadIcon, ImportIcon } from "@/components/icons";
 
 interface FolgasModalProps {
   open: boolean;
-  unidadeId: string;
   onClose: () => void;
 }
 
-interface RowData {
-  id: string;
-  nome: string;
-  cargo: string;
-  ultimaSemana?: Dayjs;
-  ultimaDomingo?: Dayjs;
-}
-
-export function FolgasModal({ open, unidadeId, onClose }: FolgasModalProps) {
+export function FolgasModal({ open, onClose }: FolgasModalProps) {
   const { message } = App.useApp();
-  const [rows, setRows] = useState<RowData[]>([]);
+  const [fileName, setFileName] = useState<string | null>(null);
 
-  const colabs = useMemo(() => getColaboradores(unidadeId), [unidadeId]);
+  const handleClose = () => {
+    setFileName(null);
+    onClose();
+  };
 
-  useEffect(() => {
-    if (!open) return;
-    setRows(
-      colabs.map((c) => ({
-        id: c.id,
-        nome: c.nome,
-        cargo: c.cargo,
-        ultimaSemana: dayjs().subtract(7, "day"),
-        ultimaDomingo: dayjs().subtract(28, "day"),
-      }))
-    );
-  }, [open, colabs]);
-
-  const columns: TableColumnsType<RowData> = [
-    { title: "Colaborador", dataIndex: "nome", key: "nome" },
-    { title: "Cargo", dataIndex: "cargo", key: "cargo", width: 200 },
-    {
-      title: "Última folga (semana)",
-      dataIndex: "ultimaSemana",
-      key: "semana",
-      width: 200,
-      render: (v: Dayjs | undefined, r) => (
-        <DatePicker
-          value={v}
-          format="DD/MM/YYYY"
-          onChange={(val) =>
-            setRows((prev) =>
-              prev.map((row) => (row.id === r.id ? { ...row, ultimaSemana: val ?? undefined } : row))
-            )
-          }
-          style={{ width: "100%" }}
-        />
-      ),
-    },
-    {
-      title: "Última folga (domingo)",
-      dataIndex: "ultimaDomingo",
-      key: "domingo",
-      width: 200,
-      render: (v: Dayjs | undefined, r) => (
-        <DatePicker
-          value={v}
-          format="DD/MM/YYYY"
-          onChange={(val) =>
-            setRows((prev) =>
-              prev.map((row) => (row.id === r.id ? { ...row, ultimaDomingo: val ?? undefined } : row))
-            )
-          }
-          style={{ width: "100%" }}
-        />
-      ),
-    },
-  ];
+  const handleImport = () => {
+    message.success("Folgas importadas com sucesso!");
+    handleClose();
+  };
 
   return (
     <Modal
-      title="Folgas individuais"
+      title="Importar folgas"
       open={open}
-      onCancel={onClose}
-      width={840}
+      onCancel={handleClose}
       destroyOnHidden
-      footer={[
-        <Button key="cancel" onClick={onClose}>
-          Cancelar
-        </Button>,
-        <Button
-          key="save"
-          type="primary"
-          onClick={() => {
-            message.success("Folgas atualizadas");
-            onClose();
-          }}
-        >
-          Salvar
-        </Button>,
-      ]}
+      footer={
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <Button
+            type="link"
+            icon={<DownloadIcon />}
+            style={{ paddingLeft: 0 }}
+            onClick={() => message.info("Template baixado (mock)")}
+          >
+            Baixar template
+          </Button>
+          <Space style={{ marginLeft: "auto" }}>
+            <Button onClick={handleClose}>Cancelar</Button>
+            <Button type="primary" disabled={!fileName} onClick={handleImport}>
+              Importar
+            </Button>
+          </Space>
+        </div>
+      }
     >
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
-        <Button icon={<PlusIcon />} type="dashed">
-          Marcar folga em lote
-        </Button>
-      </div>
-      <Table<RowData>
-        rowKey="id"
-        dataSource={rows}
-        columns={columns}
-        pagination={false}
-        size="middle"
-        bordered
-        scroll={{ y: 400 }}
-      />
+      <Upload.Dragger
+        multiple={false}
+        accept=".csv,.xlsx"
+        maxCount={1}
+        showUploadList={false}
+        beforeUpload={(file) => {
+          setFileName(file.name);
+          return false;
+        }}
+      >
+        <p className="ant-upload-drag-icon">
+          <ImportIcon size={48} strokeWidth={1.5} />
+        </p>
+        <p className="ant-upload-text">
+          {fileName ?? "Clique ou arraste o arquivo para esta área"}
+        </p>
+        <p className="ant-upload-hint">Suporta arquivos .csv ou .xlsx — máximo 5MB</p>
+      </Upload.Dragger>
     </Modal>
   );
 }

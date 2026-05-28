@@ -3,8 +3,11 @@
 import { Button, Input, Switch, Table, Tag, type TableColumnsType, App, Empty } from "antd";
 import { ImportIcon, PlusIcon, SearchIcon } from "@/components/icons";
 import { useMemo, useState } from "react";
+import type { CSSProperties } from "react";
 import type { Pdv } from "@/lib/types";
 import { getPdvs } from "@/lib/mock/pdvs";
+import { highlightMatch } from "@/lib/utils/highlight";
+import { useFillTableScroll } from "@/lib/hooks/useFillTableScroll";
 
 interface PdvPanelProps {
   unidadeId: string;
@@ -13,65 +16,153 @@ interface PdvPanelProps {
 }
 
 const TAG_COLOR_BY_TIPO: Record<Pdv["tipo"], string> = {
-  Normal: "blue",
-  Rápido: "gold",
+  Normal: "processing",
+  Rápido: "warning",
   Preferencial: "magenta",
 };
+
+const styles: Record<string, CSSProperties> = {
+  pdv: {
+    display: "flex",
+    flexDirection: "column",
+    flex: 1,
+    minHeight: 0,
+    gap: 16,
+    overflow: "hidden",
+    padding: 16,
+  },
+  pdvToolbar: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  totals: {
+    flexShrink: 0,
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    padding: 0,
+    margin: 0,
+    fontSize: 13,
+    color: "var(--ant-color-text-secondary)",
+  },
+  total: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 8,
+  },
+  totalRight: {
+    marginLeft: "auto",
+  },
+  totalLabel: {
+    color: "var(--ant-color-text-secondary)",
+  },
+  totalValue: {
+    fontWeight: 600,
+    color: "var(--ant-color-text)",
+    fontVariantNumeric: "tabular-nums",
+  },
+  totalValueActive: {
+    color: "var(--ant-color-success)",
+  },
+  totalValueBlue: {
+    color: "var(--ant-color-primary)",
+  },
+  totalValueGold: {
+    color: "#d48806",
+  },
+  totalValueMagenta: {
+    color: "#c41d7f",
+  },
+  totalDivider: {
+    width: 1,
+    height: 16,
+    background: "var(--ant-color-border-secondary)",
+  },
+};
+
+const fmtPosicao = (n: number) => String(n).padStart(2, "0");
 
 export function PdvPanel({ unidadeId, onOpenPdv, onImport }: PdvPanelProps) {
   const { message } = App.useApp();
   const [search, setSearch] = useState("");
+  const { ref: tableScrollRef, scrollY } = useFillTableScroll();
   const pdvs = useMemo(() => getPdvs(unidadeId), [unidadeId]);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) return pdvs;
     return pdvs.filter(
-      (p) => p.nome.toLowerCase().includes(term) || p.tipo.toLowerCase().includes(term)
+      (p) =>
+        fmtPosicao(p.posicao).includes(term) ||
+        p.codigoInterno.toLowerCase().includes(term) ||
+        p.tipo.toLowerCase().includes(term) ||
+        p.orientacao.toLowerCase().includes(term)
     );
   }, [pdvs, search]);
 
   const columns: TableColumnsType<Pdv> = [
-    { title: "Nome", dataIndex: "nome", key: "nome" },
+    {
+      title: "Posição",
+      dataIndex: "posicao",
+      key: "posicao",
+      width: 110,
+      render: (value: number) => highlightMatch(fmtPosicao(value), search),
+    },
+    {
+      title: "Código interno",
+      dataIndex: "codigoInterno",
+      key: "codigo",
+      width: 150,
+      render: (codigo: string) => highlightMatch(codigo, search),
+    },
     {
       title: "Tipo",
       dataIndex: "tipo",
       key: "tipo",
-      width: 160,
-      render: (tipo: Pdv["tipo"]) => <Tag color={TAG_COLOR_BY_TIPO[tipo]}>{tipo}</Tag>,
+      width: 150,
+      render: (tipo: Pdv["tipo"]) => (
+        <Tag color={TAG_COLOR_BY_TIPO[tipo]} variant="filled">
+          {tipo}
+        </Tag>
+      ),
     },
     {
-      title: "Ativo para escala",
+      title: "Ordem de abertura",
+      dataIndex: "ordemAbertura",
+      key: "ordem",
+      width: 170,
+      render: (value: number) => `${value}º`,
+    },
+    {
+      title: "Orientação",
+      dataIndex: "orientacao",
+      key: "orientacao",
+      ellipsis: true,
+      render: (orientacao: string) => highlightMatch(orientacao, search),
+    },
+    {
+      title: "Escala",
       dataIndex: "ativoParaEscala",
-      key: "ativo",
-      width: 160,
+      key: "escala",
+      width: 90,
       render: (value: boolean, p) => (
         <Switch
+          size="small"
           checked={value}
-          onChange={(checked) => message.success(`${p.nome} ${checked ? "ativado" : "desativado"}`)}
+          onChange={(checked) =>
+            message.success(`PDV ${fmtPosicao(p.posicao)} ${checked ? "ativado" : "desativado"}`)
+          }
         />
       ),
     },
     {
-      title: "Preferencial",
-      dataIndex: "preferencial",
-      key: "preferencial",
-      width: 140,
-      render: (value: boolean, p) => (
-        <Switch
-          checked={value}
-          disabled={p.tipo !== "Preferencial"}
-          onChange={(checked) => message.success(`${p.nome} preferencial: ${checked}`)}
-        />
-      ),
-    },
-    {
-      title: "",
+      title: "Ações",
       key: "actions",
-      width: 120,
-      align: "right",
+      width: 100,
       render: (_, p) => (
-        <Button type="link" onClick={() => onOpenPdv(p.id)}>
+        <Button type="link" style={{ height: 24, padding: 0 }} onClick={() => onOpenPdv(p.id)}>
           Gerenciar
         </Button>
       ),
@@ -85,19 +176,19 @@ export function PdvPanel({ unidadeId, onOpenPdv, onImport }: PdvPanelProps) {
   }, {});
 
   return (
-    <div className="cfg__pdv" style={{ padding: 16 }}>
-      <div className="cfg__pdv-toolbar">
+    <div style={styles.pdv}>
+      <div style={styles.pdvToolbar}>
         <Input
-          placeholder="Buscar PDV"
+          placeholder="Buscar"
           prefix={<SearchIcon />}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={{ width: 280 }}
+          style={{ width: 240 }}
           allowClear
         />
         <div style={{ display: "flex", gap: 8 }}>
           <Button icon={<ImportIcon />} onClick={onImport}>
-            Importar PDVs
+            Importar PDV
           </Button>
           <Button type="primary" icon={<PlusIcon />} onClick={() => onOpenPdv("")}>
             Novo PDV
@@ -105,41 +196,45 @@ export function PdvPanel({ unidadeId, onOpenPdv, onImport }: PdvPanelProps) {
         </div>
       </div>
 
-      <Table<Pdv>
-        rowKey="id"
-        dataSource={filtered}
-        columns={columns}
-        pagination={false}
-        scroll={{ y: "calc(100vh - 360px)" }}
-        size="middle"
-        bordered
-        locale={{
-          emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Nenhum PDV" />,
-        }}
-      />
+      <div ref={tableScrollRef} className="gt-table-frame" style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
+        <Table<Pdv>
+          rowKey="id"
+          dataSource={filtered}
+          columns={columns}
+          pagination={false}
+          scroll={{ y: scrollY }}
+          size="middle"
+          bordered
+          rowClassName={(record) => (record.ativoParaEscala ? "" : "is-disabled")}
+          locale={{
+            emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Nenhum PDV" />,
+          }}
+        />
+      </div>
 
-      <div className="cfg__pdv-totals">
-        <span className="cfg__pdv-total">
-          <span className="cfg__pdv-total__label">Total:</span>
-          <span className="cfg__pdv-total__value">{pdvs.length}</span>
+      <div style={styles.totals}>
+        <span style={styles.total}>
+          <span style={styles.totalLabel}>Total de PDV</span>
+          <span style={styles.totalValue}>{pdvs.length}</span>
         </span>
-        <span className="cfg__pdv-total__divider" />
-        <span className="cfg__pdv-total">
-          <span className="cfg__pdv-total__label">Ativos:</span>
-          <span className="cfg__pdv-total__value cfg__pdv-total__value--active">{ativos}</span>
+        <span style={styles.totalDivider} />
+        <span style={styles.total}>
+          <span style={styles.totalLabel}>PDV ativos para escala</span>
+          <span style={{ ...styles.totalValue, ...styles.totalValueActive }}>{ativos}</span>
         </span>
-        <span className="cfg__pdv-total__divider" />
-        <span className="cfg__pdv-total">
-          <span className="cfg__pdv-total__label">Normal:</span>
-          <span className="cfg__pdv-total__value cfg__pdv-total__value--blue">{porTipo.Normal ?? 0}</span>
+        <span style={{ ...styles.total, ...styles.totalRight }}>
+          <span style={styles.totalLabel}>Normal</span>
+          <span style={{ ...styles.totalValue, ...styles.totalValueBlue }}>{porTipo.Normal ?? 0}</span>
         </span>
-        <span className="cfg__pdv-total">
-          <span className="cfg__pdv-total__label">Rápido:</span>
-          <span className="cfg__pdv-total__value cfg__pdv-total__value--gold">{porTipo["Rápido"] ?? 0}</span>
+        <span style={styles.totalDivider} />
+        <span style={styles.total}>
+          <span style={styles.totalLabel}>Rápido</span>
+          <span style={{ ...styles.totalValue, ...styles.totalValueGold }}>{porTipo["Rápido"] ?? 0}</span>
         </span>
-        <span className="cfg__pdv-total">
-          <span className="cfg__pdv-total__label">Preferencial:</span>
-          <span className="cfg__pdv-total__value cfg__pdv-total__value--magenta">
+        <span style={styles.totalDivider} />
+        <span style={styles.total}>
+          <span style={styles.totalLabel}>Preferencial</span>
+          <span style={{ ...styles.totalValue, ...styles.totalValueMagenta }}>
             {porTipo.Preferencial ?? 0}
           </span>
         </span>

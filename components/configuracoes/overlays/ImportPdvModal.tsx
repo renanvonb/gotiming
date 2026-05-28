@@ -1,7 +1,8 @@
 "use client";
 
-import { Alert, Button, Modal, Upload, App } from "antd";
-import { InboxIcon } from "@/components/icons";
+import { Button, Modal, Space, Upload, App } from "antd";
+import { useState } from "react";
+import { DownloadIcon, ImportIcon } from "@/components/icons";
 
 interface ImportPdvModalProps {
   open: boolean;
@@ -10,47 +11,61 @@ interface ImportPdvModalProps {
 
 export function ImportPdvModal({ open, onClose }: ImportPdvModalProps) {
   const { message } = App.useApp();
+  const [fileName, setFileName] = useState<string | null>(null);
+
+  const handleClose = () => {
+    setFileName(null);
+    onClose();
+  };
+
+  const handleImport = () => {
+    message.success("PDV importado com sucesso!");
+    handleClose();
+  };
 
   return (
     <Modal
-      title="Importar PDVs"
+      title="Importar PDV"
       open={open}
-      onCancel={onClose}
-      okText="Importar"
-      cancelText="Cancelar"
-      onOk={() => {
-        message.success("Arquivo recebido (mock)");
-        onClose();
-      }}
+      onCancel={handleClose}
       destroyOnHidden
+      footer={
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <Button
+            type="link"
+            icon={<DownloadIcon />}
+            style={{ paddingLeft: 0 }}
+            onClick={() => message.info("Template baixado (mock)")}
+          >
+            Baixar template
+          </Button>
+          <Space style={{ marginLeft: "auto" }}>
+            <Button onClick={handleClose}>Cancelar</Button>
+            <Button type="primary" disabled={!fileName} onClick={handleImport}>
+              Importar
+            </Button>
+          </Space>
+        </div>
+      }
     >
-      <Alert
-        type="info"
-        showIcon
-        title="Use um arquivo CSV com as colunas: nome, tipo, código_interno."
-        style={{ marginBottom: 16 }}
-      />
       <Upload.Dragger
         multiple={false}
         accept=".csv,.xlsx"
         maxCount={1}
         showUploadList={false}
         beforeUpload={(file) => {
-          message.success(`Arquivo "${file.name}" carregado`);
+          setFileName(file.name);
           return false;
         }}
       >
         <p className="ant-upload-drag-icon">
-          <InboxIcon />
+          <ImportIcon size={48} strokeWidth={1.5} />
         </p>
-        <p className="ant-upload-text">Arraste o arquivo CSV/XLSX ou clique para enviar</p>
-        <p className="ant-upload-hint">Até 5MB.</p>
+        <p className="ant-upload-text">
+          {fileName ?? "Clique ou arraste o arquivo para esta área"}
+        </p>
+        <p className="ant-upload-hint">Suporta arquivos .csv ou .xlsx — máximo 5MB</p>
       </Upload.Dragger>
-      <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-start" }}>
-        <Button type="link" onClick={() => message.info("Modelo baixado (mock)")}>
-          Baixar modelo de planilha
-        </Button>
-      </div>
     </Modal>
   );
 }

@@ -9,20 +9,25 @@ import {
   Segmented,
   Table,
   type TableColumnsType,
+  Tooltip,
   App,
   Empty,
 } from "antd";
 import {
+  CalendarIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  EraserIcon,
   ImportIcon,
-  ThunderIcon,
+  WandIcon,
 } from "@/components/icons";
 import dayjs, { type Dayjs } from "dayjs";
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import type { PrevisaoDia } from "@/lib/types";
 import { getPrevisoes } from "@/lib/mock/previsoes";
 import { formatCurrency } from "@/lib/utils/format";
+import { useFillTableScroll } from "@/lib/hooks/useFillTableScroll";
 
 interface PrevisoesPanelProps {
   unidadeId: string;
@@ -31,12 +36,135 @@ interface PrevisoesPanelProps {
 
 type ViewMode = "calendario" | "tabela";
 
+const styles: Record<string, CSSProperties> = {
+  forecast: {
+    display: "flex",
+    flexDirection: "column",
+    flex: 1,
+    minHeight: 0,
+    position: "relative",
+    gap: 16,
+  },
+  toolbar: {
+    display: "grid",
+    gridTemplateColumns: "1fr auto 1fr",
+    alignItems: "center",
+    gap: 8,
+  },
+  toolbarLeft: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 8,
+    justifySelf: "start",
+  },
+  toolbarRight: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 8,
+    justifySelf: "end",
+  },
+  month: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 8,
+    justifySelf: "center",
+  },
+  monthLabel: {
+    minWidth: 150,
+    textAlign: "center",
+    fontWeight: 600,
+    fontSize: 14,
+    color: "var(--ant-color-text)",
+  },
+  monthPickerAnchor: {
+    position: "relative",
+    display: "inline-flex",
+  },
+  hiddenPicker: {
+    position: "absolute",
+    left: 0,
+    bottom: 0,
+    width: 0,
+    height: 0,
+    padding: 0,
+    margin: 0,
+    border: 0,
+    opacity: 0,
+    pointerEvents: "none",
+  },
+  body: {
+    flex: 1,
+    minHeight: 0,
+    display: "flex",
+    flexDirection: "column",
+  },
+  cell: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: 4,
+    width: "100%",
+    height: "100%",
+    padding: "4px 0 0",
+  },
+  cellValue: {
+    fontSize: 12,
+    fontVariantNumeric: "tabular-nums",
+    color: "var(--ant-color-text)",
+    fontWeight: 500,
+  },
+  cellValuePlaceholder: {
+    color: "var(--ant-color-text-quaternary)",
+    fontWeight: 400,
+  },
+  totals: {
+    flexShrink: 0,
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    padding: 0,
+    margin: 0,
+    fontSize: 13,
+    color: "var(--ant-color-text-secondary)",
+  },
+  total: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 8,
+  },
+  totalRight: {
+    marginLeft: "auto",
+  },
+  totalLabel: {
+    color: "var(--ant-color-text-secondary)",
+  },
+  totalValue: {
+    fontWeight: 600,
+    color: "var(--ant-color-text)",
+    fontVariantNumeric: "tabular-nums",
+  },
+  totalValueBlue: {
+    color: "var(--ant-color-primary)",
+  },
+  totalDivider: {
+    width: 1,
+    height: 16,
+    background: "var(--ant-color-border-secondary)",
+  },
+};
+
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
-  const { message, modal } = App.useApp();
+  const { message } = App.useApp();
+  const { ref: tableScrollRef, scrollY } = useFillTableScroll();
   const [mes, setMes] = useState<Dayjs>(() => dayjs());
   const [mode, setMode] = useState<ViewMode>("calendario");
   const [previsoes, setPrevisoes] = useState<PrevisaoDia[]>([]);
   const [editing, setEditing] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const editValueRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -54,6 +182,8 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
     () => previsoes.reduce((sum, p) => sum + p.valorPrevistoCentavos, 0),
     [previsoes]
   );
+  const media = previsoes.length > 0 ? Math.round(total / previsoes.length) : 0;
+  const semPrevisao = previsoes.filter((p) => p.valorPrevistoCentavos === 0).length;
 
   const commitEdit = (key: string, nextValue: number | null) => {
     if (nextValue == null) {
@@ -76,7 +206,7 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
     if (isEditing) {
       const initial = (p?.valorPrevistoCentavos ?? 0) / 100;
       return (
-        <div className="cfg__forecast-cell" onClick={(e) => e.stopPropagation()}>
+        <div style={styles.cell} onClick={(e) => e.stopPropagation()}>
           <InputNumber
             autoFocus
             defaultValue={initial}
@@ -102,16 +232,22 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
       );
     }
 
+    const empty = !p || p.valorPrevistoCentavos === 0;
     return (
       <div
-        className="cfg__forecast-cell"
+        style={styles.cell}
         onClick={() => {
           editValueRef.current = null;
           setEditing(key);
         }}
       >
-        <span className={`cfg__forecast-cell__value${p ? "" : " is-placeholder"}`}>
-          {p ? formatCurrency(p.valorPrevistoCentavos) : "—"}
+        <span
+          style={{
+            ...styles.cellValue,
+            ...(empty ? styles.cellValuePlaceholder : null),
+          }}
+        >
+          {formatCurrency(p?.valorPrevistoCentavos ?? 0)}
         </span>
       </div>
     );
@@ -119,21 +255,21 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
 
   const columns: TableColumnsType<PrevisaoDia> = [
     {
-      title: "Dia",
+      title: "Data",
       dataIndex: "data",
-      key: "dia",
-      width: 90,
-      render: (d: string) => dayjs(d).format("DD/MM"),
+      key: "data",
+      width: 120,
+      render: (d: string) => dayjs(d).format("DD/MM/YY"),
     },
     {
       title: "Dia da semana",
       dataIndex: "data",
       key: "diaSemana",
-      width: 160,
-      render: (d: string) => dayjs(d).format("dddd"),
+      width: 180,
+      render: (d: string) => capitalize(dayjs(d).format("dddd")),
     },
     {
-      title: "Valor previsto",
+      title: "Previsão de venda",
       dataIndex: "valorPrevistoCentavos",
       key: "valor",
       render: (v: number, p) => (
@@ -143,6 +279,7 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
           decimalSeparator=","
           prefix="R$"
           controls={false}
+          placeholder="0,00"
           onChange={(next) =>
             setPrevisoes((prev) =>
               prev.map((row) =>
@@ -160,13 +297,15 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
 
   const handleClear = () => {
     setPrevisoes((prev) => prev.map((p) => ({ ...p, valorPrevistoCentavos: 0 })));
-    message.success("Previsões zeradas");
+    message.success("Previsões do mês limpas");
   };
 
+  const monthLabel = capitalize(mes.format("MMMM [de] YYYY"));
+
   return (
-    <div className="cfg__forecast" style={{ padding: 16 }}>
-      <div className="cfg__forecast-toolbar">
-        <div className="cfg__forecast-toolbar__left">
+    <div style={{ ...styles.forecast, padding: 16 }}>
+      <div style={styles.toolbar}>
+        <div style={styles.toolbarLeft}>
           <Segmented
             value={mode}
             onChange={(v) => setMode(v as ViewMode)}
@@ -175,25 +314,52 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
               { label: "Tabela", value: "tabela" },
             ]}
           />
+          <span style={styles.monthPickerAnchor}>
+            <Tooltip title="Selecionar mês e ano">
+              <Button
+                icon={<CalendarIcon />}
+                aria-label="Selecionar mês e ano"
+                onClick={() => setPickerOpen(true)}
+              />
+            </Tooltip>
+            <DatePicker
+              picker="month"
+              value={mes}
+              open={pickerOpen}
+              onOpenChange={setPickerOpen}
+              onChange={(d) => {
+                if (d) setMes(d);
+                setPickerOpen(false);
+              }}
+              allowClear={false}
+              inputReadOnly
+              style={styles.hiddenPicker}
+            />
+          </span>
         </div>
-        <div className="cfg__forecast-month">
-          <Button icon={<ChevronLeftIcon />} onClick={() => setMes((m) => m.subtract(1, "month"))} />
-          <DatePicker
-            picker="month"
-            value={mes}
-            onChange={(d) => d && setMes(d)}
-            format="MMMM [de] YYYY"
-            allowClear={false}
+        <div style={styles.month}>
+          <Button
+            type="text"
+            icon={<ChevronLeftIcon />}
+            aria-label="Mês anterior"
+            onClick={() => setMes((m) => m.subtract(1, "month"))}
           />
-          <Button icon={<ChevronRightIcon />} onClick={() => setMes((m) => m.add(1, "month"))} />
+          <span style={styles.monthLabel}>{monthLabel}</span>
+          <Button
+            type="text"
+            icon={<ChevronRightIcon />}
+            aria-label="Próximo mês"
+            onClick={() => setMes((m) => m.add(1, "month"))}
+          />
         </div>
-        <div className="cfg__forecast-toolbar__right">
-          <Button icon={<ThunderIcon />} onClick={() => message.info("Geração com IA em breve")}>
-            Gerar com IA
-          </Button>
-          <Button icon={<ImportIcon />} onClick={onImport}>
-            Importar
-          </Button>
+        <div style={styles.toolbarRight}>
+          <Tooltip title="Preenchimento inteligente">
+            <Button
+              icon={<WandIcon />}
+              aria-label="Preenchimento inteligente"
+              onClick={() => message.info("Preenchimento inteligente em breve")}
+            />
+          </Tooltip>
           <Popconfirm
             title="Limpar previsões do mês"
             description="Essa ação zera todos os valores previstos deste mês."
@@ -202,12 +368,17 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
             okButtonProps={{ danger: true }}
             onConfirm={handleClear}
           >
-            <Button danger>Limpar</Button>
+            <Tooltip title="Limpar previsões do mês">
+              <Button icon={<EraserIcon />} aria-label="Limpar previsões do mês" />
+            </Tooltip>
           </Popconfirm>
+          <Button icon={<ImportIcon />} onClick={onImport}>
+            Importar previsões
+          </Button>
         </div>
       </div>
 
-      <div className="cfg__forecast-body">
+      <div style={styles.body}>
         {mode === "calendario" ? (
           <Calendar
             value={mes}
@@ -220,41 +391,44 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
             headerRender={() => null}
           />
         ) : (
-          <Table<PrevisaoDia>
-            rowKey="data"
-            dataSource={previsoes}
-            columns={columns}
-            pagination={false}
-            size="middle"
-            bordered
-            scroll={{ y: "calc(100vh - 360px)" }}
-            locale={{
-              emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Sem previsões" />,
-            }}
-          />
+          <div ref={tableScrollRef} className="gt-table-frame" style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
+            <Table<PrevisaoDia>
+              rowKey="data"
+              dataSource={previsoes}
+              columns={columns}
+              pagination={false}
+              size="middle"
+              bordered
+              scroll={{ y: scrollY }}
+              locale={{
+                emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Sem previsões" />,
+              }}
+            />
+          </div>
         )}
       </div>
 
-      <div className="cfg__pdv-totals">
-        <span className="cfg__pdv-total">
-          <span className="cfg__pdv-total__label">Total do mês:</span>
-          <span className="cfg__pdv-total__value cfg__pdv-total__value--blue">{formatCurrency(total)}</span>
+      <div style={styles.totals}>
+        <span style={styles.total}>
+          <span style={styles.totalLabel}>Valor total previsto no mês</span>
+          <span style={{ ...styles.totalValue, ...styles.totalValueBlue }}>{formatCurrency(total)}</span>
         </span>
-        <span className="cfg__pdv-total__divider" />
-        <span className="cfg__pdv-total">
-          <span className="cfg__pdv-total__label">Dias:</span>
-          <span className="cfg__pdv-total__value">{previsoes.length}</span>
+        <span style={styles.totalDivider} />
+        <span style={styles.total}>
+          <span style={styles.totalLabel}>Valor médio diário no mês</span>
+          <span style={styles.totalValue}>{formatCurrency(media)}</span>
         </span>
-        <span className="cfg__pdv-total--right">
-          <Button
-            type="primary"
-            onClick={() => {
-              modal.success({ title: "Previsões salvas", content: "As alterações foram aplicadas." });
-            }}
-          >
-            Salvar
-          </Button>
-        </span>
+        {semPrevisao > 0 && (
+          <span style={{ ...styles.total, ...styles.totalRight }}>
+            <span style={styles.totalLabel}>
+              {semPrevisao === 1 ? "Existe " : "Existem "}
+              <span style={styles.totalValue}>{semPrevisao}</span>
+              {semPrevisao === 1
+                ? " dia sem previsão informada neste mês"
+                : " dias sem previsão informada neste mês"}
+            </span>
+          </span>
+        )}
       </div>
     </div>
   );
