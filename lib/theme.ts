@@ -23,5 +23,11 @@ export const lightTheme: ThemeConfig = {
       cellPaddingBlockMD: 13,
       cellPaddingInlineMD: 12,
     },
+    // Sem sombra nos botões (primary/default/danger).
+    Button: {
+      primaryShadow: "none",
+      defaultShadow: "none",
+      dangerShadow: "none",
+    },
   },
 };

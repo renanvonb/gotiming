@@ -462,6 +462,18 @@ button {
 .ant-modal .ant-form-item {
   margin-bottom: 16px;
 }
+/* Modal: padding de 24px (lateral e vertical) e gap de 16px entre título/corpo
+   e corpo/rodapé (o AntD usa 20px vertical + gaps de 8/12px). !important porque
+   o cssinjs do AntD injeta o estilo depois, com a mesma especificidade. */
+.ant-modal-container {
+  padding: 24px !important;
+}
+.ant-modal-header {
+  margin-bottom: 16px !important;
+}
+.ant-modal-footer {
+  margin-top: 16px !important;
+}
 
 /* SideMenu: título alinhado ao início (flex:1) e botão de fechar à direita,
    conforme o protótipo (o padrão do AntD coloca o "X" à esquerda do título). */
