@@ -146,7 +146,7 @@ export function PdvPanel({ unidadeId, onOpenPdv, onImport }: PdvPanelProps) {
       title: "Escala",
       dataIndex: "ativoParaEscala",
       key: "escala",
-      width: 90,
+      width: 74,
       render: (value: boolean, p) => (
         <Switch
           size="small"
