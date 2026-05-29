@@ -1,5 +1,5 @@
 import type { Colaborador } from "@/lib/types";
-import { unidades } from "@/lib/mock/unidades";
+import { defaultUnidadeId } from "@/lib/mock/unidades";
 
 type Seed = {
   nome: string;
@@ -31,6 +31,18 @@ const SEED: Seed[] = [
   { nome: "William Borba", codigoOperador: 6336, funcao: "Desenvolvedor mobile", ultimaFolgaSemana: "2026-05-12", ultimaFolgaDomingo: "2026-05-12", avatarColor: "var(--gt-avatar-bg-purple)" },
 ];
 
+// Modelos de contrato: tipo (jornada diária) + horas semanais correspondentes.
+export const MODELOS_CONTRATO = [
+  { tipo: "7:20", horasSemana: 36 },
+  { tipo: "6:00", horasSemana: 30 },
+  { tipo: "5:00", horasSemana: 25 },
+  { tipo: "4:00", horasSemana: 20 },
+] as const;
+
+export function horasDoModelo(tipo: string): number | undefined {
+  return MODELOS_CONTRATO.find((m) => m.tipo === tipo)?.horasSemana;
+}
+
 function build(unidadeId: string): Colaborador[] {
   return SEED.map<Colaborador>((s, index) => ({
     id: `${unidadeId}-colab-${index + 1}`,
@@ -38,6 +50,7 @@ function build(unidadeId: string): Colaborador[] {
     nome: s.nome,
     codigoOperador: s.codigoOperador,
     funcao: s.funcao,
+    modeloContrato: MODELOS_CONTRATO[index % MODELOS_CONTRATO.length]!.tipo,
     ultimaFolgaSemana: s.ultimaFolgaSemana,
     ultimaFolgaDomingo: s.ultimaFolgaDomingo,
     avatarColor: s.avatarColor,
@@ -45,9 +58,10 @@ function build(unidadeId: string): Colaborador[] {
   }));
 }
 
-export const colaboradoresPorUnidade: Record<string, Colaborador[]> = Object.fromEntries(
-  unidades.map((u) => [u.id, build(u.id)] as const)
-);
+// Somente a unidade padrão (Acre) possui dados; as demais ficam vazias.
+export const colaboradoresPorUnidade: Record<string, Colaborador[]> = {
+  [defaultUnidadeId]: build(defaultUnidadeId),
+};
 
 export function getColaboradores(unidadeId: string): Colaborador[] {
   return colaboradoresPorUnidade[unidadeId] ?? [];

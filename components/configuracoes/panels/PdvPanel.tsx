@@ -89,8 +89,13 @@ export function PdvPanel({ unidadeId, onOpenPdv, onImport }: PdvPanelProps) {
   const [search, setSearch] = useState("");
   const { ref: tableScrollRef, scrollY } = useFillTableScroll();
   const [pdvs, setPdvs] = useState<Pdv[]>(() => getPdvs(unidadeId));
+  // Loader transitório ao trocar de unidade (evita spinner infinito quando vazio).
+  const [carregando, setCarregando] = useState(true);
   useEffect(() => {
     setPdvs(getPdvs(unidadeId));
+    setCarregando(true);
+    const t = window.setTimeout(() => setCarregando(false), 700);
+    return () => window.clearTimeout(t);
   }, [unidadeId]);
 
   const filtered = useMemo(() => {
@@ -125,8 +130,8 @@ export function PdvPanel({ unidadeId, onOpenPdv, onImport }: PdvPanelProps) {
       dataIndex: "tipo",
       key: "tipo",
       ellipsis: true,
-      render: (tipo: Pdv["tipo"]) => (
-        <Tag color={TAG_COLOR_BY_TIPO[tipo]} variant="filled">
+      render: (tipo: Pdv["tipo"], p) => (
+        <Tag color={p.ativoParaEscala ? TAG_COLOR_BY_TIPO[tipo] : "default"} variant="filled">
           {tipo}
         </Tag>
       ),
@@ -212,6 +217,7 @@ export function PdvPanel({ unidadeId, onOpenPdv, onImport }: PdvPanelProps) {
           scroll={{ y: scrollY }}
           size="middle"
           bordered
+          loading={carregando && pdvs.length === 0}
           rowClassName={(record) => (record.ativoParaEscala ? "" : "is-disabled")}
           locale={{
             emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Nenhum PDV encontrado" />,

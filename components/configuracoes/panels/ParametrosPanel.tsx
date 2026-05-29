@@ -58,7 +58,7 @@ const styles: Record<string, CSSProperties> = {
   grid: {
     display: "flex",
     flexDirection: "row",
-    gap: 16,
+    gap: 12,
     flex: 1,
     minHeight: 0,
     alignItems: "stretch",

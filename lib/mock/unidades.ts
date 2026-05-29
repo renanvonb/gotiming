@@ -2,11 +2,11 @@ import type { Unidade } from "@/lib/types";
 import { slugify } from "@/lib/utils/format";
 
 const ESTADOS: Array<{ nome: string; uf: string; hasWarning?: boolean }> = [
-  { nome: "Acre", uf: "AC", hasWarning: true },
-  { nome: "Alagoas", uf: "AL" },
+  { nome: "Acre", uf: "AC" },
+  { nome: "Alagoas", uf: "AL", hasWarning: true },
   { nome: "Amapá", uf: "AP" },
   { nome: "Amazonas", uf: "AM" },
-  { nome: "Bahia", uf: "BA" },
+  { nome: "Bahia", uf: "BA", hasWarning: true },
   { nome: "Ceará", uf: "CE" },
   { nome: "Distrito Federal", uf: "DF" },
   { nome: "Espírito Santo", uf: "ES" },
@@ -17,7 +17,7 @@ const ESTADOS: Array<{ nome: string; uf: string; hasWarning?: boolean }> = [
   { nome: "Minas Gerais", uf: "MG", hasWarning: true },
   { nome: "Pará", uf: "PA" },
   { nome: "Paraíba", uf: "PB" },
-  { nome: "Paraná", uf: "PR" },
+  { nome: "Paraná", uf: "PR", hasWarning: true },
   { nome: "Pernambuco", uf: "PE" },
   { nome: "Piauí", uf: "PI" },
   { nome: "Rio de Janeiro", uf: "RJ" },

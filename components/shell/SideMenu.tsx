@@ -1,7 +1,6 @@
 "use client";
 
-import { Drawer, Empty, Segmented } from "antd";
-import type { CSSProperties } from "react";
+import { Drawer, Empty, Form, Radio } from "antd";
 import {
   CalendarIcon,
   MoonIcon,
@@ -12,6 +11,7 @@ import {
 import { Link, useLocation } from "react-router-dom";
 import type { SidebarMenuKey } from "@/components/shell/Sidebar";
 import { useThemeMode } from "@/components/providers/ThemeProvider";
+import { useHover } from "@/lib/hooks/useHover";
 
 interface SideMenuProps {
   active: SidebarMenuKey | null;
@@ -23,7 +23,6 @@ const TITLES: Record<SidebarMenuKey, string> = {
   favoritos: "Favoritos",
   historico: "Últimos acessos",
   notificacoes: "Notificações",
-  tweaks: "Tweaks",
   solucoes: "Soluções",
   configuracoes: "Configurações",
   usuario: "Usuário",
@@ -42,7 +41,7 @@ export function SideMenu({ active, onClose }: SideMenuProps) {
 
   return (
     <Drawer
-      title={title}
+      title={<span style={{ fontSize: 18, fontWeight: 600 }}>{title}</span>}
       placement="left"
       open={open}
       onClose={onClose}
@@ -54,8 +53,14 @@ export function SideMenu({ active, onClose }: SideMenuProps) {
       keyboard
       styles={{
         wrapper: { boxShadow: "var(--ant-box-shadow)" },
-        body: { padding: 8, paddingLeft: 56 + 8 },
-        header: { paddingLeft: 56 + 16, paddingRight: 16 },
+        body: { padding: 12, paddingLeft: 56 + 12 },
+        header: {
+          minHeight: "var(--header-height)",
+          paddingTop: 0,
+          paddingBottom: 0,
+          paddingLeft: 56 + 16,
+          paddingRight: 16,
+        },
         mask: { left: 56 },
       }}
       getContainer={false}
@@ -83,8 +88,6 @@ function MenuBody({ active, pathname, onClose }: MenuBodyProps) {
       return <EmptyState description="Nenhum acesso recente" />;
     case "notificacoes":
       return <EmptyState description="Nenhuma notificação" />;
-    case "tweaks":
-      return <TweaksMenu />;
     case "solucoes":
       return <EmptyState description="Nenhuma solução disponível" />;
     case "configuracoes":
@@ -103,85 +106,105 @@ interface MenuListItem {
 }
 
 function MenuList({ items, pathname, onClose }: { items: MenuListItem[]; pathname: string | null; onClose: () => void }) {
+  const { mode } = useThemeMode();
+  const dark = mode === "dark";
   return (
-    <nav style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-      {items.map(({ href, label, icon }) => {
-        const isActive = pathname === href;
-        return (
-          <Link
-            key={href + label}
-            to={href}
-            onClick={onClose}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              padding: "12px 16px",
-              borderRadius: 6,
-              color: isActive ? "var(--ant-color-primary)" : "var(--ant-color-text)",
-              background: isActive ? "var(--ant-color-primary-bg)" : "transparent",
-              textDecoration: "none",
-              fontWeight: isActive ? 500 : 400,
-            }}
-          >
-            <span style={{ display: "inline-flex", color: "var(--ant-color-text-secondary)" }}>{icon}</span>
-            <span>{label}</span>
-          </Link>
-        );
-      })}
+    <nav style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {items.map((item) => (
+        <MenuLink
+          key={item.href + item.label}
+          item={item}
+          isActive={pathname === item.href}
+          dark={dark}
+          onClose={onClose}
+        />
+      ))}
     </nav>
+  );
+}
+
+function MenuLink({
+  item,
+  isActive,
+  dark,
+  onClose,
+}: {
+  item: MenuListItem;
+  isActive: boolean;
+  dark: boolean;
+  onClose: () => void;
+}) {
+  const [hovered, handlers] = useHover();
+
+  const activeBg = dark ? "rgba(22, 119, 255, 0.18)" : "var(--ant-color-primary-bg)";
+  const hoverBg = dark ? "rgba(255, 255, 255, 0.06)" : "var(--ant-color-fill-tertiary)";
+  const highlighted = isActive || hovered;
+  const iconColor = highlighted ? "var(--ant-color-primary)" : "var(--ant-color-text-tertiary)";
+
+  return (
+    <Link
+      to={item.href}
+      onClick={onClose}
+      {...handlers}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        height: 40,
+        padding: "0 12px",
+        borderRadius: "var(--ant-border-radius)",
+        background: isActive ? activeBg : hovered ? hoverBg : "transparent",
+        color: highlighted ? "var(--ant-color-primary)" : "var(--ant-color-text)",
+        fontWeight: isActive ? 500 : 400,
+        textDecoration: "none",
+        transition:
+          "background var(--ant-motion-duration-fast), color var(--ant-motion-duration-fast)",
+      }}
+    >
+      <span style={{ display: "inline-flex", color: iconColor, flex: "none" }}>{item.icon}</span>
+      <span>{item.label}</span>
+    </Link>
   );
 }
 
 function EmptyState({ description }: { description: string }) {
   return (
-    <div style={{ display: "grid", placeItems: "center", padding: 24 }}>
+    <div style={{ display: "grid", placeItems: "center", height: "100%", padding: 24 }}>
       <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={description} />
     </div>
   );
 }
 
-const tweaksStyles: Record<string, CSSProperties> = {
-  row: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    padding: "12px 16px",
-  },
-  label: {
-    fontSize: 14,
-    color: "var(--ant-color-text)",
-  },
-};
-
-function TweaksMenu() {
+function UsuarioMenu() {
   const { mode, setMode } = useThemeMode();
   return (
-    <div style={tweaksStyles.row}>
-      <span style={tweaksStyles.label}>Aparência</span>
-      <Segmented
-        value={mode}
-        onChange={(v) => setMode(v as "light" | "dark")}
-        options={[
-          { value: "light", label: "Claro", icon: <SunIcon /> },
-          { value: "dark", label: "Escuro", icon: <MoonIcon /> },
-        ]}
-      />
-    </div>
-  );
-}
-
-function UsuarioMenu() {
-  return (
-    <div
-      style={{
-        padding: 16,
-        color: "var(--ant-color-text-tertiary)",
-        fontSize: 13,
-      }}
-    >
-      renanborstel@goapice.com
-    </div>
+    <Form layout="vertical">
+      <Form.Item label="Aparência" style={{ marginBottom: 0 }}>
+        <Radio.Group
+          value={mode}
+          onChange={(e) => setMode(e.target.value as "light" | "dark")}
+          optionType="button"
+          buttonStyle="solid"
+          options={[
+            {
+              value: "light",
+              label: (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <SunIcon /> Claro
+                </span>
+              ),
+            },
+            {
+              value: "dark",
+              label: (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <MoonIcon /> Escuro
+                </span>
+              ),
+            },
+          ]}
+        />
+      </Form.Item>
+    </Form>
   );
 }

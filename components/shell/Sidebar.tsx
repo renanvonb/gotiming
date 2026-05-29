@@ -1,11 +1,10 @@
 import { Tooltip } from "antd";
 import {
-  AppsIcon,
   BellIcon,
   ClockIcon,
-  ControlIcon,
   MenuIcon,
   SettingsIcon,
+  SolutionsIcon,
   StarIcon,
   UserIcon,
 } from "@/components/icons";
@@ -18,7 +17,6 @@ export type SidebarMenuKey =
   | "favoritos"
   | "historico"
   | "notificacoes"
-  | "tweaks"
   | "solucoes"
   | "configuracoes"
   | "usuario";
@@ -41,8 +39,7 @@ const grupoTopo: BtnConfig[] = [
 ];
 
 const grupoBase: BtnConfig[] = [
-  { key: "tweaks", label: "Tweaks", icon: <ControlIcon size={20} /> },
-  { key: "solucoes", label: "Soluções", icon: <AppsIcon size={20} /> },
+  { key: "solucoes", label: "Soluções", icon: <SolutionsIcon size={20} /> },
   { key: "configuracoes", label: "Configurações", icon: <SettingsIcon size={20} /> },
 ];
 
@@ -130,7 +127,7 @@ interface SidebarButtonProps {
 function SidebarButton({ label, icon, active, onClick }: SidebarButtonProps) {
   const [hovered, hoverHandlers] = useHover();
   return (
-    <Tooltip title={label} placement="right">
+    <Tooltip title={label} placement="right" align={{ offset: [22, 0] }}>
       <button
         type="button"
         style={{
@@ -157,7 +154,7 @@ interface AvatarButtonProps {
 function AvatarButton({ active, onClick }: AvatarButtonProps) {
   const [hovered, hoverHandlers] = useHover();
   return (
-    <Tooltip title="Usuário" placement="right">
+    <Tooltip title="Usuário" placement="right" align={{ offset: [22, 0] }}>
       <button
         type="button"
         style={{
@@ -182,8 +179,9 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
 
   return (
     <aside style={styles.sidebar} aria-label="Navegação principal">
-      <Link to="/" style={styles.logo} title="Gotime" aria-label="Gotime">
-        <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: "block" }}>
+      <Tooltip title="Gotime" placement="right" align={{ offset: [22, 0] }}>
+        <Link to="/escalas" style={styles.logo} aria-label="Gotime">
+          <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: "block" }}>
           <path
             d="M4.00172 5.75823C4.00172 4.55851 4.97429 3.58594 6.17401 3.58594H25.8277C27.0274 3.58594 28 4.55851 28 5.75823C28 6.95796 27.0274 7.93053 25.8277 7.93053H6.17402C4.97429 7.93053 4.00172 6.95796 4.00172 5.75823Z"
             fill="#FFD666"
@@ -208,8 +206,9 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
             d="M11.0363 19.4125C11.0363 18.2128 12.0088 17.2402 13.2086 17.2402L19.0012 17.2402C20.2009 17.2402 21.1735 18.2128 21.1735 19.4125C21.1735 20.6122 20.2009 21.5848 19.0012 21.5848H13.2086C12.0088 21.5848 11.0363 20.6122 11.0363 19.4125Z"
             fill="#FAAD14"
           />
-        </svg>
-      </Link>
+          </svg>
+        </Link>
+      </Tooltip>
 
       <SidebarButton
         label="Módulos"

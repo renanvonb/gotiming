@@ -1,5 +1,5 @@
 import type { PrevisaoDia } from "@/lib/types";
-import { unidades } from "@/lib/mock/unidades";
+import { defaultUnidadeId } from "@/lib/mock/unidades";
 
 function seedRandom(seed: number): () => number {
   let value = seed;
@@ -31,6 +31,7 @@ export function getPrevisoes(
   year: number,
   month: number
 ): PrevisaoDia[] {
-  if (!unidades.some((u) => u.id === unidadeId)) return [];
+  // Somente a unidade padrão (Acre) possui dados; as demais ficam vazias.
+  if (unidadeId !== defaultUnidadeId) return [];
   return basePrevisoes(unidadeId, year, month);
 }

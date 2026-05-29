@@ -25,6 +25,12 @@ export function useFillTableScroll() {
     if (scrollYRef.current === undefined || Math.abs(next - scrollYRef.current) > 1) {
       setScrollY(next);
     }
+    // Detecta se o corpo rola (conteúdo excede a área visível). Quando rola, a
+    // classe `gt-has-scroll` remove a borda inferior da última linha para não
+    // duplicar com a borda da moldura no fim da rolagem.
+    const body = wrapper.querySelector<HTMLElement>(".ant-table-body");
+    const overflowing = !!body && body.scrollHeight > body.clientHeight + 1;
+    wrapper.classList.toggle("gt-has-scroll", overflowing);
   }, []);
 
   useLayoutEffect(() => {

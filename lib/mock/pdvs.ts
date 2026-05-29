@@ -1,5 +1,5 @@
 import type { Pdv, PdvOrientacao, PdvTipo } from "@/lib/types";
-import { unidades } from "@/lib/mock/unidades";
+import { defaultUnidadeId } from "@/lib/mock/unidades";
 
 type Seed = {
   codigoInterno: string;
@@ -32,9 +32,10 @@ function build(unidadeId: string): Pdv[] {
   }));
 }
 
-export const pdvsPorUnidade: Record<string, Pdv[]> = Object.fromEntries(
-  unidades.map((u) => [u.id, build(u.id)] as const)
-);
+// Somente a unidade padrão (Acre) possui dados; as demais ficam vazias.
+export const pdvsPorUnidade: Record<string, Pdv[]> = {
+  [defaultUnidadeId]: build(defaultUnidadeId),
+};
 
 export function getPdvs(unidadeId: string): Pdv[] {
   return pdvsPorUnidade[unidadeId] ?? [];

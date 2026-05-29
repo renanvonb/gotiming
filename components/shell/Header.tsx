@@ -75,14 +75,14 @@ const styles: Record<string, CSSProperties> = {
     placeItems: "center",
     border: 0,
     background: "transparent",
-    color: "var(--ant-color-text-tertiary)",
+    color: "var(--ant-color-text)",
     borderRadius: 6,
     transition:
       "color var(--ant-motion-duration-fast), background var(--ant-motion-duration-fast)",
   },
   iconBtnHover: {
     background: "var(--ant-color-fill-tertiary)",
-    color: "var(--ant-color-text-secondary)",
+    color: "var(--ant-color-text)",
   },
   favActive: {
     color: "var(--ant-gold)",
@@ -123,7 +123,7 @@ function BackButton({ onClick }: { onClick: () => void }) {
         aria-label="Voltar"
         {...handlers}
       >
-        <ArrowLeftIcon size={18} />
+        <ArrowLeftIcon size={20} />
       </button>
     </Tooltip>
   );
@@ -139,7 +139,7 @@ function EditButton() {
         aria-label="Renomear"
         {...handlers}
       >
-        <EditIcon size={16} />
+        <EditIcon size={18} />
       </button>
     </Tooltip>
   );
@@ -168,7 +168,7 @@ function FavButton({
         {...handlers}
       >
         <StarIcon
-          size={16}
+          size={18}
           fill={favorited ? "var(--ant-gold)" : "none"}
         />
       </button>

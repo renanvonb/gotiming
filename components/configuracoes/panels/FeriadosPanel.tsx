@@ -2,7 +2,7 @@
 
 import { Button, Input, Table, type TableColumnsType, Empty } from "antd";
 import { CalendarSearchIcon, PlusIcon, SearchIcon } from "@/components/icons";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import dayjs from "dayjs";
 import type { Feriado } from "@/lib/types";
@@ -47,6 +47,13 @@ export function FeriadosPanel({ unidadeId, onOpenFeriado, onImport }: FeriadosPa
   const [search, setSearch] = useState("");
   const { ref: tableScrollRef, scrollY } = useFillTableScroll();
   const feriados = useMemo(() => getFeriados(unidadeId), [unidadeId]);
+  // Loader transitório ao trocar de unidade (evita spinner infinito quando vazio).
+  const [carregando, setCarregando] = useState(true);
+  useEffect(() => {
+    setCarregando(true);
+    const t = window.setTimeout(() => setCarregando(false), 700);
+    return () => window.clearTimeout(t);
+  }, [unidadeId]);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -117,6 +124,7 @@ export function FeriadosPanel({ unidadeId, onOpenFeriado, onImport }: FeriadosPa
           size="middle"
           bordered
           scroll={{ y: scrollY }}
+          loading={carregando && feriados.length === 0}
           locale={{
             emptyText: (
               <Empty

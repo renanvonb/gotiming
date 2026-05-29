@@ -3,6 +3,7 @@
 import { Empty, Input, Tooltip } from "antd";
 import {
   CircleChevronLeftIcon,
+  ExclamationIcon,
   SearchIcon,
   StoreIcon,
 } from "@/components/icons";
@@ -223,6 +224,21 @@ function VTab({ unidade, active, dark, term, onClick }: VTabProps) {
     >
       <StoreIcon size={16} style={{ color: iconColor, flex: "none" }} />
       <span style={styles.vtabLabel}>{highlightMatch(unidade.nome, term)}</span>
+      {unidade.hasWarning && (
+        <Tooltip
+          title={
+            <>
+              Existem configurações
+              <br />
+              pendentes nesta unidade
+            </>
+          }
+        >
+          <span style={{ display: "inline-flex", flex: "none", color: "var(--ant-color-warning)" }}>
+            <ExclamationIcon size={16} />
+          </span>
+        </Tooltip>
+      )}
     </button>
   );
 }

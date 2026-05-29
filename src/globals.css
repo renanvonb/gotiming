@@ -213,7 +213,13 @@ button {
   border-inline-end: 0 !important;
 }
 /* A última linha mantém sua borda inferior (separa as linhas da área vazia
-   quando o corpo não está cheio); a moldura desenha a base do quadro. */
+   quando o corpo não está cheio); a moldura desenha a base do quadro. Porém,
+   quando o corpo rola (.gt-has-scroll, definido em useFillTableScroll), a última
+   linha fica encostada na base da moldura no fim da rolagem — remover a borda
+   inferior dela evita a borda dupla (2px). */
+.gt-has-scroll .ant-table-tbody > tr:last-child > td {
+  border-block-end: 0 !important;
+}
 
 /* Sem resultados: a tabela vazia preenche toda a área das linhas para o Empty
    (placeholder com vertical-align: middle do AntD) ficar centralizado. Só com
@@ -338,7 +344,7 @@ button {
   pointer-events: none;
 }
 /* Aparência comum de todas as barras de shimmer. */
-.is-loading .ant-table-tbody > tr:not(.ant-table-measure-row) > td::after,
+.is-loading .ant-table-tbody > tr:not(.ant-table-measure-row):not(.ant-table-placeholder) > td::after,
 .is-loading .gt-cal-day::after,
 .is-loading .gt-cal-value::after {
   content: "";
@@ -355,13 +361,13 @@ button {
 }
 /* Esconde o conteúdo real dos elementos de dado (!important para vencer a cor
    inline das células do calendário). */
-.is-loading .ant-table-tbody > tr:not(.ant-table-measure-row) > td,
+.is-loading .ant-table-tbody > tr:not(.ant-table-measure-row):not(.ant-table-placeholder) > td,
 .is-loading .gt-cal-day,
 .is-loading .gt-cal-value {
   color: transparent !important;
   position: relative;
 }
-.is-loading .ant-table-tbody > tr:not(.ant-table-measure-row) > td > * {
+.is-loading .ant-table-tbody > tr:not(.ant-table-measure-row):not(.ant-table-placeholder) > td > * {
   visibility: hidden;
 }
 /* O valor ocupa a largura toda durante o loading para a barra (60%) ficar
@@ -370,7 +376,7 @@ button {
   align-self: stretch !important;
 }
 /* Geometria por tipo de elemento (respeitando o padding de 12px). */
-.is-loading .ant-table-tbody > tr:not(.ant-table-measure-row) > td::after {
+.is-loading .ant-table-tbody > tr:not(.ant-table-measure-row):not(.ant-table-placeholder) > td::after {
   left: 12px;
   right: 12px;
   top: 50%;
@@ -493,4 +499,32 @@ button {
    conforme o protótipo (o padrão do AntD coloca o "X" à esquerda do título). */
 .gt-sidemenu .ant-drawer-header-title {
   flex-direction: row-reverse;
+}
+
+/* Horários (v2): o botão "Replicar para outros dias" só aparece ao passar o
+   mouse sobre o bloco do dia. Uso opacity + pointer-events (e não visibility,
+   que ficava presa no `transition: all` do botão AntD e demorava a sumir) para
+   um fade suave e certeiro. O elemento mantém o espaço, então o switch não pula.
+   Seletor com 2 classes para vencer o `.ant-btn` injetado pelo cssinjs. */
+.gt-day-block .gt-replicar-btn {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease-in-out;
+}
+.gt-day-block:hover .gt-replicar-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Drawers: padding vertical do footer = 12px (ações). !important porque o AntD
+   injeta o padding (shorthand) via cssinjs com a mesma especificidade, depois. */
+.ant-drawer-footer {
+  padding-top: 12px !important;
+  padding-bottom: 12px !important;
+}
+
+/* Campos de busca: distância do ícone (prefix) ao texto = 8px, igual ao gap
+   ícone↔texto dos botões do design system. */
+.ant-input-affix-wrapper .ant-input-prefix {
+  margin-inline-end: 8px;
 }

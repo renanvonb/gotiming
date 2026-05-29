@@ -1,11 +1,12 @@
 "use client";
 
-import { Tabs } from "antd";
+import { Button, Drawer, Empty, Tabs } from "antd";
 import { useReducer, useEffect, useMemo, useCallback, useState, useRef } from "react";
 import type { CSSProperties } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AppShell } from "@/components/shell/AppShell";
 import { Header } from "@/components/shell/Header";
+import { HistoryIcon } from "@/components/icons";
 import { UnitsPane } from "@/components/configuracoes/UnitsPane";
 import {
   AREAS,
@@ -129,6 +130,7 @@ export function ConfiguracoesContent() {
   }, [state.unidadeAtivaId, state.areaAtiva, setSearchParams, searchParams]);
 
   const closeOverlay = useCallback(() => dispatch({ type: "close-overlay" }), []);
+  const [histOpen, setHistOpen] = useState(false);
 
   // Skeleton de carregamento: .is-loading no contêiner do painel por alguns ms.
   const [loading, setLoading] = useState(false);
@@ -153,6 +155,11 @@ export function ConfiguracoesContent() {
         showEdit={false}
         favorited={false}
         onToggleFavorite={() => {}}
+        actions={
+          <Button icon={<HistoryIcon />} onClick={() => setHistOpen(true)}>
+            Histórico de alterações
+          </Button>
+        }
       />
       <div style={styles.content}>
         <div style={styles.blocks}>
@@ -268,6 +275,17 @@ export function ConfiguracoesContent() {
         open={state.overlay.kind === "import-pdv-modal"}
         onClose={closeOverlay}
       />
+      <Drawer
+        title="Histórico de alterações"
+        open={histOpen}
+        onClose={() => setHistOpen(false)}
+        size={420}
+        destroyOnHidden
+      >
+        <div style={{ display: "grid", placeItems: "center", height: "100%" }}>
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Em breve" />
+        </div>
+      </Drawer>
       <FolgasModal open={state.overlay.kind === "folgas-modal"} onClose={closeOverlay} />
       <PrevisoesImportModal
         open={state.overlay.kind === "previsoes-import-modal"}

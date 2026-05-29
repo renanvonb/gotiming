@@ -13,6 +13,7 @@ export type Colaborador = {
   nome: string;
   codigoOperador: number;
   funcao: string;
+  modeloContrato: string; // ex.: "7:20 · 36h semanais"
   ultimaFolgaSemana: string; // ISO date
   ultimaFolgaDomingo: string; // ISO date
   avatarColor: string; // pastel token, e.g. "var(--gt-avatar-bg-orange)"

@@ -1,10 +1,10 @@
 "use client";
 
-import { Button, DatePicker, Divider, Drawer, Form, Space, Switch, App } from "antd";
+import { Button, DatePicker, Divider, Drawer, Form, Select, Space, Switch, App } from "antd";
 import { useEffect, useMemo } from "react";
 import type { CSSProperties } from "react";
 import dayjs, { type Dayjs } from "dayjs";
-import { getColaboradores } from "@/lib/mock/colaboradores";
+import { getColaboradores, MODELOS_CONTRATO } from "@/lib/mock/colaboradores";
 import { initialsOf } from "@/lib/utils/format";
 
 const styles: Record<string, CSSProperties> = {
@@ -57,6 +57,7 @@ interface ColabDrawerProps {
 }
 
 interface FormValues {
+  modeloContrato?: string;
   ultimaFolgaSemana?: Dayjs;
   ultimaFolgaDomingo?: Dayjs;
   ativoParaEscala: boolean;
@@ -74,6 +75,7 @@ export function ColabDrawer({ open, colabId, unidadeId, onClose }: ColabDrawerPr
   useEffect(() => {
     if (!open) return;
     form.setFieldsValue({
+      modeloContrato: colab?.modeloContrato,
       ultimaFolgaSemana: colab ? dayjs(colab.ultimaFolgaSemana) : undefined,
       ultimaFolgaDomingo: colab ? dayjs(colab.ultimaFolgaDomingo) : undefined,
       ativoParaEscala: colab?.ativoParaEscala ?? true,
@@ -127,6 +129,15 @@ export function ColabDrawer({ open, colabId, unidadeId, onClose }: ColabDrawerPr
       <Divider />
 
       <Form<FormValues> form={form} layout="vertical">
+        <Form.Item label="Modelo de contrato" name="modeloContrato">
+          <Select
+            placeholder="Selecione o modelo de contrato"
+            options={MODELOS_CONTRATO.map((m) => ({
+              value: m.tipo,
+              label: `${m.tipo} · ${m.horasSemana}h semanais`,
+            }))}
+          />
+        </Form.Item>
         <Form.Item label="Última folga semana" name="ultimaFolgaSemana">
           <DatePicker format="DD/MM/YYYY" style={{ width: "100%" }} />
         </Form.Item>

@@ -1,5 +1,5 @@
 import type { Parametros } from "@/lib/types";
-import { unidades } from "@/lib/mock/unidades";
+import { defaultUnidadeId } from "@/lib/mock/unidades";
 
 function baseParametros(unidadeId: string): Parametros {
   return {
@@ -47,10 +47,46 @@ function baseParametros(unidadeId: string): Parametros {
   };
 }
 
-export const parametrosPorUnidade: Record<string, Parametros> = Object.fromEntries(
-  unidades.map((u) => [u.id, baseParametros(u.id)] as const)
-);
+// Parâmetros padrão/vazios para unidades ainda não configuradas.
+function defaultParametros(unidadeId: string): Parametros {
+  return {
+    unidadeId,
+    jornada: {
+      contratoMode: "combinado",
+      contratos: [
+        { tipo: "7:20", horasSemana: 36, habilitado: false, pct: 0 },
+        { tipo: "6:00", horasSemana: 30, habilitado: false, pct: 0 },
+        { tipo: "5:00", horasSemana: 25, habilitado: false, pct: 0 },
+        { tipo: "4:00", horasSemana: 20, habilitado: false, pct: 0 },
+      ],
+      intervaloPre: false,
+      intervaloPos: false,
+      acordoAtual: undefined,
+      acordosHistorico: [],
+    },
+    almoco: {
+      duracaoTotalMin: 60,
+      duracaoMinimaMin: 30,
+      janelaInicioMin: "11:30",
+      janelaInicioMax: "14:00",
+    },
+    folgas: {
+      diasFolga: [],
+      aosDomingos: "1x1",
+    },
+    tolerancia: {
+      pdvMinimo: 0,
+      nivelServicoPct: 0,
+      absenteismoPct: 0,
+    },
+  };
+}
+
+// Somente a unidade padrão (Acre) possui dados; as demais usam o padrão.
+export const parametrosPorUnidade: Record<string, Parametros> = {
+  [defaultUnidadeId]: baseParametros(defaultUnidadeId),
+};
 
 export function getParametros(unidadeId: string): Parametros {
-  return parametrosPorUnidade[unidadeId] ?? baseParametros(unidadeId);
+  return parametrosPorUnidade[unidadeId] ?? defaultParametros(unidadeId);
 }

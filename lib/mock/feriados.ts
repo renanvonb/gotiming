@@ -1,5 +1,5 @@
 import type { Feriado, HorarioRange } from "@/lib/types";
-import { unidades } from "@/lib/mock/unidades";
+import { defaultUnidadeId } from "@/lib/mock/unidades";
 
 type Seed = {
   slug: string;
@@ -33,9 +33,10 @@ function baseFeriados(unidadeId: string): Feriado[] {
   }));
 }
 
-export const feriadosPorUnidade: Record<string, Feriado[]> = Object.fromEntries(
-  unidades.map((u) => [u.id, baseFeriados(u.id)] as const)
-);
+// Somente a unidade padrão (Acre) possui dados; as demais ficam vazias.
+export const feriadosPorUnidade: Record<string, Feriado[]> = {
+  [defaultUnidadeId]: baseFeriados(defaultUnidadeId),
+};
 
 export function getFeriados(unidadeId: string): Feriado[] {
   return feriadosPorUnidade[unidadeId] ?? [];

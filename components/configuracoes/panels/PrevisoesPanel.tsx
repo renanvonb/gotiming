@@ -274,6 +274,8 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerYear, setPickerYear] = useState(() => dayjs().year());
   const [loading, setLoading] = useState(false);
+  // Loader transitório do estado vazio (evita spinner infinito em unidade sem dados).
+  const [emptyLoading, setEmptyLoading] = useState(true);
   const [flashing, setFlashing] = useState(false);
   const draggingRef = useRef(false);
   const movedRef = useRef(false);
@@ -285,6 +287,17 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
   const multiBufferRef = useRef("");
   const copyBufferRef = useRef<number | null>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
+
+  // Histórico para desfazer (Ctrl+Z) / refazer (Ctrl+Shift+Z). snapshot() guarda
+  // o estado atual antes de cada ação que altera os valores.
+  const previsoesRef = useRef(previsoes);
+  previsoesRef.current = previsoes;
+  const pastRef = useRef<PrevisaoDia[][]>([]);
+  const futureRef = useRef<PrevisaoDia[][]>([]);
+  const snapshot = () => {
+    pastRef.current = [...pastRef.current.slice(-49), previsoesRef.current];
+    futureRef.current = [];
+  };
 
   const storageKey = `gotime:forecast:${unidadeId}:${mes.format("YYYY-MM")}`;
 
@@ -304,6 +317,13 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
       /* ignora JSON inválido */
     }
     setPrevisoes(list);
+    // Novo contexto (unidade/mês) → zera o histórico de desfazer/refazer.
+    pastRef.current = [];
+    futureRef.current = [];
+    // Loader transitório do estado vazio.
+    setEmptyLoading(true);
+    const t = window.setTimeout(() => setEmptyLoading(false), 700);
+    return () => window.clearTimeout(t);
   }, [unidadeId, mes, storageKey]);
 
   // Persiste (debounce 50ms) apenas os dias com valor > 0, por unidade+mês.
@@ -374,6 +394,7 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
     selectionRef.current.forEach((k) => {
       if ((byDateRef.current.get(k)?.valorPrevistoCentavos ?? 0) !== cents) changed++;
     });
+    if (changed > 0) snapshot();
     fillSelected(cents);
     if (changed > 0) {
       message.success(
@@ -460,6 +481,28 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
     editRawRef.current = null;
   };
 
+  const undo = () => {
+    if (pastRef.current.length === 0) return;
+    const prev = pastRef.current[pastRef.current.length - 1]!;
+    pastRef.current = pastRef.current.slice(0, -1);
+    futureRef.current = [previsoesRef.current, ...futureRef.current];
+    multiBufferRef.current = "";
+    clearSelection();
+    setPrevisoes(prev);
+    message.success("Ação desfeita");
+  };
+
+  const redo = () => {
+    if (futureRef.current.length === 0) return;
+    const next = futureRef.current[0]!;
+    futureRef.current = futureRef.current.slice(1);
+    pastRef.current = [...pastRef.current, previsoesRef.current];
+    multiBufferRef.current = "";
+    clearSelection();
+    setPrevisoes(next);
+    message.success("Ação refeita");
+  };
+
   // Confirma o valor digitado em todos os dias selecionados. Mantém a seleção
   // (só fecha o input) para que Shift possa estender a partir da origem; a
   // seleção é zerada só no Esc ou clique fora.
@@ -473,6 +516,7 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
         (p) => selection.has(p.data) && p.valorPrevistoCentavos !== cents
       ).length;
       if (changed > 0) {
+        snapshot();
         setPrevisoes((prev) =>
           prev.map((p) => (selection.has(p.data) ? { ...p, valorPrevistoCentavos: cents } : p))
         );
@@ -552,6 +596,8 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
       if (sel.size < 2) return;
       if (/^\d$/.test(e.key)) {
         e.preventDefault();
+        // Início da sessão de digitação → registra um único ponto de desfazer.
+        if (multiBufferRef.current === "") snapshot();
         if (multiBufferRef.current.length < 12) multiBufferRef.current += e.key;
         fillSelected(parseInt(multiBufferRef.current || "0", 10) || 0);
       } else if (e.key === "Backspace") {
@@ -560,6 +606,7 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
         fillSelected(parseInt(multiBufferRef.current || "0", 10) || 0);
       } else if (e.key === "Delete") {
         e.preventDefault();
+        snapshot();
         fillSelected(0);
         message.success(`${sel.size} previsões limpas com sucesso!`);
         multiBufferRef.current = "";
@@ -578,6 +625,22 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
+  // Desfazer/refazer: Ctrl+Z (ou ⌘Z) e Ctrl+Shift+Z. Ignora quando o foco está
+  // num input (deixa o desfazer nativo do campo agir).
+  useEffect(() => {
+    const onUndoRedo = (e: KeyboardEvent) => {
+      const mod = e.ctrlKey || e.metaKey;
+      if (!mod || e.key.toLowerCase() !== "z") return;
+      const tag = (document.activeElement?.tagName ?? "").toLowerCase();
+      if (tag === "input" || tag === "textarea") return;
+      e.preventDefault();
+      if (e.shiftKey) redo();
+      else undo();
+    };
+    document.addEventListener("keydown", onUndoRedo);
+    return () => document.removeEventListener("keydown", onUndoRedo);
   }, []);
 
   // Input de edição inline compartilhado por calendário e tabela: máscara de
@@ -735,6 +798,7 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
         onClick: (e) => e.stopPropagation(),
         style: {
           cursor: "pointer",
+          userSelect: "none",
           ...(selection.has(p.data) ? { background: "var(--ant-color-primary-bg)" } : null),
         },
       }),
@@ -755,6 +819,7 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
   ];
 
   const handleClear = () => {
+    snapshot();
     setPrevisoes((prev) => prev.map((p) => ({ ...p, valorPrevistoCentavos: 0 })));
     message.success("Previsões do mês foram limpas");
   };
@@ -782,6 +847,7 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
     const hide = message.loading("Analisando dados históricos…", 0);
     window.setTimeout(() => {
       hide();
+      snapshot();
       setPrevisoes((prev) =>
         prev.map((p) => ({
           ...p,
@@ -963,6 +1029,7 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
               size="middle"
               bordered
               scroll={{ y: scrollY }}
+              loading={emptyLoading && previsoes.length === 0}
               locale={{
                 emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Sem previsões" />,
               }}
