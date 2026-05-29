@@ -2,7 +2,7 @@
 
 import { Button, Input, Switch, Table, type TableColumnsType, App, Empty } from "antd";
 import { ImportIcon, SearchIcon } from "@/components/icons";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import dayjs from "dayjs";
 import type { Colaborador } from "@/lib/types";
@@ -99,7 +99,10 @@ export function ColaboradoresPanel({ unidadeId, onOpenColab, onImportFolgas }: C
   const { message } = App.useApp();
   const [search, setSearch] = useState("");
   const { ref: tableScrollRef, scrollY } = useFillTableScroll();
-  const colaboradores = useMemo(() => getColaboradores(unidadeId), [unidadeId]);
+  const [colaboradores, setColaboradores] = useState<Colaborador[]>(() => getColaboradores(unidadeId));
+  useEffect(() => {
+    setColaboradores(getColaboradores(unidadeId));
+  }, [unidadeId]);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -163,9 +166,12 @@ export function ColaboradoresPanel({ unidadeId, onOpenColab, onImportFolgas }: C
         <Switch
           size="small"
           checked={value}
-          onChange={(checked) =>
-            message.success(`${c.nome} ${checked ? "ativado" : "desativado"}`)
-          }
+          onChange={(checked) => {
+            setColaboradores((prev) =>
+              prev.map((x) => (x.id === c.id ? { ...x, ativoParaEscala: checked } : x))
+            );
+            message.success(`${c.nome} ${checked ? "ativado" : "desativado"}`);
+          }}
         />
       ),
     },

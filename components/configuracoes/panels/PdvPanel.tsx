@@ -2,7 +2,7 @@
 
 import { Button, Input, Switch, Table, Tag, type TableColumnsType, App, Empty } from "antd";
 import { ImportIcon, PlusIcon, SearchIcon } from "@/components/icons";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import type { Pdv } from "@/lib/types";
 import { getPdvs } from "@/lib/mock/pdvs";
@@ -88,7 +88,10 @@ export function PdvPanel({ unidadeId, onOpenPdv, onImport }: PdvPanelProps) {
   const { message } = App.useApp();
   const [search, setSearch] = useState("");
   const { ref: tableScrollRef, scrollY } = useFillTableScroll();
-  const pdvs = useMemo(() => getPdvs(unidadeId), [unidadeId]);
+  const [pdvs, setPdvs] = useState<Pdv[]>(() => getPdvs(unidadeId));
+  useEffect(() => {
+    setPdvs(getPdvs(unidadeId));
+  }, [unidadeId]);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -152,9 +155,12 @@ export function PdvPanel({ unidadeId, onOpenPdv, onImport }: PdvPanelProps) {
         <Switch
           size="small"
           checked={value}
-          onChange={(checked) =>
-            message.success(`PDV ${fmtPosicao(p.posicao)} ${checked ? "ativado" : "desativado"}`)
-          }
+          onChange={(checked) => {
+            setPdvs((prev) =>
+              prev.map((x) => (x.id === p.id ? { ...x, ativoParaEscala: checked } : x))
+            );
+            message.success(`PDV ${fmtPosicao(p.posicao)} ${checked ? "ativado" : "desativado"}`);
+          }}
         />
       ),
     },
