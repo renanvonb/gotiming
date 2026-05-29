@@ -78,7 +78,7 @@ export function FeriadosPanel({ unidadeId, onOpenFeriado, onImport }: FeriadosPa
     {
       title: "Ações",
       key: "actions",
-      ellipsis: true,
+      width: 92,
       render: (_, f) => (
         <Button type="link" style={{ height: 24, padding: 0 }} onClick={() => onOpenFeriado(f.id)}>
           Gerenciar
