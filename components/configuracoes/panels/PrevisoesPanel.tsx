@@ -674,6 +674,7 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
         }
       >
         <span
+          className={inMonth ? "gt-cal-day" : undefined}
           style={{
             ...styles.calDay,
             ...(inMonth ? null : styles.calDayDim),
@@ -687,6 +688,7 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
             editInput(cents)
           ) : (
             <span
+              className="gt-cal-value"
               style={{
                 ...styles.calValue,
                 ...(empty ? styles.calValuePlaceholder : null),
@@ -931,7 +933,7 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
         </div>
       </div>
 
-      <div ref={bodyRef} style={styles.body}>
+      <div ref={bodyRef} style={styles.body} className={loading ? "is-loading" : undefined}>
         {mode === "calendario" ? (
           <div className={`gt-cal-frame gt-cal-weeks-${weeksNeeded}`}>
             <div className="gt-cal-weekhead" aria-hidden>
@@ -941,23 +943,15 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
                 </div>
               ))}
             </div>
-            {loading ? (
-              <div className="gt-cal-skel" aria-hidden>
-                {Array.from({ length: 42 }).map((_, i) => (
-                  <div key={i} className="gt-cal-skel__cell" />
-                ))}
-              </div>
-            ) : (
-              <Calendar
-                className="gt-cal-fill"
-                value={mes}
-                fullscreen
-                fullCellRender={(date, info) =>
-                  info.type === "date" ? renderCell(date as Dayjs) : info.originNode
-                }
-                headerRender={() => null}
-              />
-            )}
+            <Calendar
+              className="gt-cal-fill"
+              value={mes}
+              fullscreen
+              fullCellRender={(date, info) =>
+                info.type === "date" ? renderCell(date as Dayjs) : info.originNode
+              }
+              headerRender={() => null}
+            />
           </div>
         ) : (
           <div ref={tableScrollRef} className="gt-table-frame" style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
@@ -968,7 +962,6 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
               pagination={false}
               size="middle"
               bordered
-              loading={loading}
               scroll={{ y: scrollY }}
               locale={{
                 emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Sem previsões" />,

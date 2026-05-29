@@ -1,7 +1,7 @@
 "use client";
 
 import { Tabs } from "antd";
-import { useReducer, useEffect, useMemo, useCallback } from "react";
+import { useReducer, useEffect, useMemo, useCallback, useState, useRef } from "react";
 import type { CSSProperties } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AppShell } from "@/components/shell/AppShell";
@@ -130,6 +130,19 @@ export function ConfiguracoesContent() {
 
   const closeOverlay = useCallback(() => dispatch({ type: "close-overlay" }), []);
 
+  // Skeleton de carregamento: .is-loading no contêiner do painel por alguns ms.
+  const [loading, setLoading] = useState(false);
+  const skelTimer = useRef<number | null>(null);
+  const showSkel = useCallback((ms: number) => {
+    setLoading(true);
+    if (skelTimer.current) window.clearTimeout(skelTimer.current);
+    skelTimer.current = window.setTimeout(() => setLoading(false), ms);
+  }, []);
+  // Carga inicial do painel ativo (700ms).
+  useEffect(() => {
+    showSkel(700);
+  }, [showSkel]);
+
   const tabItems = AREAS.map((a) => ({ key: a.key, label: a.label }));
   const unidadeAtiva = unidades.find((u) => u.id === state.unidadeAtivaId);
 
@@ -152,7 +165,10 @@ export function ConfiguracoesContent() {
             <UnitsPane
               unidades={unidades}
               ativaId={state.unidadeAtivaId}
-              onAtivaChange={(id) => dispatch({ type: "set-unidade", id })}
+              onAtivaChange={(id) => {
+                showSkel(500);
+                dispatch({ type: "set-unidade", id });
+              }}
               search={state.unidadeSearch}
               onSearchChange={(value) => dispatch({ type: "set-unidade-search", value })}
               colapsada={state.unidadesColapsadas}
@@ -166,16 +182,17 @@ export function ConfiguracoesContent() {
               </div>
               <Tabs
                 activeKey={state.areaAtiva}
-                onChange={(key) =>
+                onChange={(key) => {
+                  showSkel(400);
                   dispatch({
                     type: "set-area",
                     area: key as (typeof AREAS)[number]["key"],
-                  })
-                }
+                  });
+                }}
                 items={tabItems}
                 tabBarStyle={{ paddingLeft: 16, paddingRight: 16, marginBottom: 0 }}
               />
-              <div style={styles.cfgContent}>
+              <div style={styles.cfgContent} className={loading ? "is-loading" : undefined}>
                 {state.areaAtiva === "colaboradores" && (
                   <ColaboradoresPanel
                     unidadeId={state.unidadeAtivaId}

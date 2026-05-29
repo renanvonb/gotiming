@@ -160,8 +160,10 @@ export function HorariosPanel({ unidadeId }: HorariosPanelProps) {
               <div style={styles.daySwitch}>
                 <Switch size="small" checked={!d.fechado} onChange={(v) => toggleDay(d.dia, v)} />
               </div>
-              <div style={{ ...styles.dayName, ...dimmed }}>{diasLabels[d.dia]}</div>
-              <div style={{ ...styles.dayRanges, ...dimmed }}>
+              <div className="gt-skel-text" style={{ ...styles.dayName, ...dimmed }}>
+                {diasLabels[d.dia]}
+              </div>
+              <div className="gt-skel-btn" style={{ ...styles.dayRanges, ...dimmed }}>
                 {d.ranges.map((r, idx) => (
                   <span key={idx} style={styles.rangeChip}>
                     <RangePicker

@@ -212,7 +212,7 @@ export function PdvPanel({ unidadeId, onOpenPdv, onImport }: PdvPanelProps) {
         />
       </div>
 
-      <div style={styles.totals}>
+      <div style={styles.totals} className="gt-totals-skel">
         <span style={styles.total}>
           <span style={styles.totalLabel}>Total de PDV</span>
           <span style={styles.totalValue}>{pdvs.length}</span>

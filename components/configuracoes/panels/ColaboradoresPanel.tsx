@@ -216,7 +216,7 @@ export function ColaboradoresPanel({ unidadeId, onOpenColab, onImportFolgas }: C
         />
       </div>
 
-      <div style={styles.totals}>
+      <div style={styles.totals} className="gt-totals-skel">
         <span style={styles.total}>
           <span style={styles.totalLabel}>Total de colaboradores</span>
           <span style={styles.totalValue}>{colaboradores.length}</span>

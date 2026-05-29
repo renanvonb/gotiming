@@ -42,6 +42,10 @@
   --gt-avatar-bg-purple: #f4dafe;
   --gt-avatar-bg-magenta: #ffd6e7;
   --gt-avatar-bg-gray: #e0e0e0;
+
+  /* Shimmer (skeleton de carregamento). */
+  --gt-shimmer-base: rgba(0, 0, 0, 0.06);
+  --gt-shimmer-mid: rgba(0, 0, 0, 0.1);
 }
 
 [data-theme="dark"] {
@@ -61,6 +65,9 @@
   --gt-avatar-bg-purple: #1a1325;
   --gt-avatar-bg-magenta: #291321;
   --gt-avatar-bg-gray: #262626;
+
+  --gt-shimmer-base: rgba(255, 255, 255, 0.06);
+  --gt-shimmer-mid: rgba(255, 255, 255, 0.12);
 }
 
 * {
@@ -298,41 +305,6 @@ button {
     color: var(--ant-color-text);
   }
 }
-/* Skeleton de carregamento (troca de mês/visualização): grade de células com
-   shimmer, alinhada à grade real. */
-.gt-cal-skel {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  grid-auto-rows: 1fr;
-}
-.gt-cal-skel__cell {
-  border-top: 1px solid var(--ant-color-border-secondary);
-  border-inline-start: 1px solid var(--ant-color-border-secondary);
-  position: relative;
-  overflow: hidden;
-}
-.gt-cal-skel__cell:nth-child(7n + 1) {
-  border-inline-start: 0;
-}
-.gt-cal-skel__cell:nth-child(-n + 7) {
-  border-top: 0;
-}
-.gt-cal-skel__cell::after {
-  content: "";
-  position: absolute;
-  inset: 8px 12px;
-  border-radius: 4px;
-  background: linear-gradient(
-    90deg,
-    var(--ant-color-fill-quaternary) 25%,
-    var(--ant-color-fill-secondary) 37%,
-    var(--ant-color-fill-quaternary) 63%
-  );
-  background-size: 400% 100%;
-  animation: gtSkel 1.4s ease infinite;
-}
 @keyframes gtSkel {
   0% {
     background-position: 100% 0;
@@ -340,6 +312,148 @@ button {
   100% {
     background-position: 0 0;
   }
+}
+
+/* ============================================================
+   Skeleton / shimmer de carregamento (per-element). .is-loading num contêiner
+   bloqueia interação e troca os elementos de dado por uma barra de shimmer
+   desenhada via ::after dentro do próprio box, preservando tamanho/padding
+   (sem layout shift). Cabeçalhos e toolbars não recebem shimmer.
+   ============================================================ */
+.is-loading {
+  pointer-events: none;
+}
+/* Aparência comum de todas as barras de shimmer. */
+.is-loading .ant-table-tbody > tr:not(.ant-table-measure-row) > td::after,
+.is-loading .gt-cal-day::after,
+.is-loading .gt-cal-value::after {
+  content: "";
+  position: absolute;
+  border-radius: 2px;
+  background: linear-gradient(
+    90deg,
+    var(--gt-shimmer-base) 25%,
+    var(--gt-shimmer-mid) 37%,
+    var(--gt-shimmer-base) 63%
+  );
+  background-size: 400% 100%;
+  animation: gtSkel 1.4s ease infinite;
+}
+/* Esconde o conteúdo real dos elementos de dado (!important para vencer a cor
+   inline das células do calendário). */
+.is-loading .ant-table-tbody > tr:not(.ant-table-measure-row) > td,
+.is-loading .gt-cal-day,
+.is-loading .gt-cal-value {
+  color: transparent !important;
+  position: relative;
+}
+.is-loading .ant-table-tbody > tr:not(.ant-table-measure-row) > td > * {
+  visibility: hidden;
+}
+/* O valor ocupa a largura toda durante o loading para a barra (60%) ficar
+   proporcional à célula, não ao texto. */
+.is-loading .gt-cal-value {
+  align-self: stretch !important;
+}
+/* Geometria por tipo de elemento (respeitando o padding de 12px). */
+.is-loading .ant-table-tbody > tr:not(.ant-table-measure-row) > td::after {
+  left: 12px;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 12px;
+}
+/* Calendário: número do dia no topo-direita (18px); valor no rodapé-esquerda (60%). */
+.is-loading .gt-cal-day::after {
+  top: 1px;
+  right: 0;
+  width: 18px;
+  height: 12px;
+}
+.is-loading .gt-cal-value::after {
+  left: 0;
+  bottom: 1px;
+  width: 60%;
+  height: 11px;
+}
+/* Utilitário: transforma um texto numa barra de shimmer de largura total. */
+.is-loading .gt-skel-text {
+  color: transparent !important;
+  position: relative;
+}
+.is-loading .gt-skel-text::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 12px;
+  border-radius: 2px;
+  background: linear-gradient(
+    90deg,
+    var(--gt-shimmer-base) 25%,
+    var(--gt-shimmer-mid) 37%,
+    var(--gt-shimmer-base) 63%
+  );
+  background-size: 400% 100%;
+  animation: gtSkel 1.4s ease infinite;
+}
+/* Esconde elementos sem virar shimmer (ex.: divisores dos totalizadores). */
+.is-loading .gt-skel-hide {
+  visibility: hidden;
+}
+/* Horários: faixas de horário em forma de botão (220×32). */
+.is-loading .gt-skel-btn {
+  color: transparent !important;
+  position: relative;
+}
+.is-loading .gt-skel-btn > * {
+  visibility: hidden;
+}
+.is-loading .gt-skel-btn::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 220px;
+  height: 32px;
+  border-radius: 2px;
+  background: linear-gradient(
+    90deg,
+    var(--gt-shimmer-base) 25%,
+    var(--gt-shimmer-mid) 37%,
+    var(--gt-shimmer-base) 63%
+  );
+  background-size: 400% 100%;
+  animation: gtSkel 1.4s ease infinite;
+}
+/* Totalizadores: shimmer individual em cada label/valor (spans aninhados);
+   divisores (spans vazios) ficam só escondidos. */
+.is-loading .gt-totals-skel > span > span {
+  color: transparent !important;
+  position: relative;
+}
+.is-loading .gt-totals-skel > span > span::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 12px;
+  border-radius: 2px;
+  background: linear-gradient(
+    90deg,
+    var(--gt-shimmer-base) 25%,
+    var(--gt-shimmer-mid) 37%,
+    var(--gt-shimmer-base) 63%
+  );
+  background-size: 400% 100%;
+  animation: gtSkel 1.4s ease infinite;
+}
+.is-loading .gt-totals-skel > span:empty {
+  visibility: hidden;
 }
 
 /* SideMenu: título alinhado ao início (flex:1) e botão de fechar à direita,
