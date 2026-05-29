@@ -154,7 +154,7 @@ button {
    em tempo de execução, que vencem por ordem de origem. */
 .gt-table-frame {
   border: 1px solid var(--ant-color-border-secondary);
-  border-radius: 2px;
+  border-radius: var(--ant-border-radius);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -226,7 +226,7 @@ button {
   display: flex;
   flex-direction: column;
   border: 1px solid var(--ant-color-border-secondary);
-  border-radius: 2px;
+  border-radius: var(--ant-border-radius);
   overflow: hidden;
 }
 .gt-cal-weekhead {

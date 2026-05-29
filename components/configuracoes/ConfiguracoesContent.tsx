@@ -70,7 +70,7 @@ const styles: Record<string, CSSProperties> = {
   block: {
     background: "var(--ant-color-bg-container)",
     border: "1px solid var(--ant-color-border-secondary)",
-    borderRadius: 4,
+    borderRadius: "var(--ant-border-radius)",
     padding: 0,
     minHeight: 0,
     display: "flex",
