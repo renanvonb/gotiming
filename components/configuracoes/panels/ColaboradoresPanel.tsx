@@ -158,6 +158,7 @@ export function ColaboradoresPanel({ unidadeId, onOpenColab, onImportFolgas }: C
       dataIndex: "ativoParaEscala",
       key: "escala",
       width: 74,
+      align: "center",
       render: (value: boolean, c) => (
         <Switch
           size="small"
