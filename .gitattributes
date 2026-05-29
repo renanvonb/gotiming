@@ -1,0 +1,4 @@
+# O handoff de design (protótipos HTML/CSS/JS exportados) é material de
+# referência, não código do app. Marcamos como "vendored" para que o GitHub
+# Linguist não o conte nas estatísticas de linguagem do repositório.
+design-reference/** linguist-vendored
