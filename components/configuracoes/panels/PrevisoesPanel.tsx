@@ -3,7 +3,6 @@
 import {
   Button,
   Calendar,
-  InputNumber,
   Popconfirm,
   Radio,
   Table,
@@ -284,6 +283,7 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
   const byDateRef = useRef<Map<string, PrevisaoDia>>(new Map());
   const multiBufferRef = useRef("");
   const copyBufferRef = useRef<number | null>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
 
   const storageKey = `gotime:forecast:${unidadeId}:${mes.format("YYYY-MM")}`;
 
@@ -500,11 +500,11 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
     return () => document.removeEventListener("mouseup", onUp);
   }, []);
 
-  // Clicar fora do calendário limpa a seleção.
+  // Clicar fora da área do calendário/tabela limpa a seleção.
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
-      const t = e.target as HTMLElement | null;
-      if (!t || !t.closest(".gt-cal-fill")) clearSelection();
+      const t = e.target as Node | null;
+      if (!bodyRef.current || !t || !bodyRef.current.contains(t)) clearSelection();
     };
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
@@ -579,6 +579,47 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
+  // Input de edição inline compartilhado por calendário e tabela: máscara de
+  // centavos ao vivo, sem moldura, sem prefixo R$ durante a digitação.
+  const editInput = (cents: number) => (
+    <input
+      className="gt-cal-input"
+      autoFocus
+      defaultValue={cents === 0 ? "" : fmtCentavos(String(cents))}
+      inputMode="numeric"
+      onMouseDown={(e) => e.stopPropagation()}
+      onFocus={(e) => {
+        editRawRef.current = e.target.value.replace(/\D/g, "");
+        const len = e.target.value.length;
+        e.target.setSelectionRange(len, len);
+      }}
+      onBeforeInput={(e) => {
+        const data = (e.nativeEvent as InputEvent).data;
+        if (data && /\D/.test(data)) e.preventDefault();
+      }}
+      onChange={(e) => {
+        const digits = e.target.value.replace(/\D/g, "");
+        editRawRef.current = digits;
+        e.target.value = fmtCentavos(digits);
+      }}
+      onPaste={(e) => {
+        e.preventDefault();
+        const text = e.clipboardData.getData("text");
+        const c = text.includes(",")
+          ? Math.round((parseValor(text) ?? 0) * 100)
+          : parseInt(text.replace(/\D/g, "") || "0", 10) || 0;
+        editRawRef.current = String(c);
+        e.currentTarget.value = fmtCentavos(String(c));
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") commitBatch();
+        else if (e.key === "Escape") clearSelection();
+      }}
+      onBlur={commitBatch}
+      style={styles.calInputEl}
+    />
+  );
+
   const renderCell = (date: Dayjs) => {
     const inMonth = date.month() === mes.month() && date.year() === mes.year();
     const key = date.format("YYYY-MM-DD");
@@ -642,42 +683,7 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
         </span>
         {inMonth &&
           (showInput ? (
-            <input
-              className="gt-cal-input"
-              autoFocus
-              defaultValue={empty ? "" : fmtCentavos(String(cents))}
-              inputMode="numeric"
-              onMouseDown={(e) => e.stopPropagation()}
-              onFocus={(e) => {
-                editRawRef.current = e.target.value.replace(/\D/g, "");
-                const len = e.target.value.length;
-                e.target.setSelectionRange(len, len);
-              }}
-              onBeforeInput={(e) => {
-                const data = (e.nativeEvent as InputEvent).data;
-                if (data && /\D/.test(data)) e.preventDefault();
-              }}
-              onChange={(e) => {
-                const digits = e.target.value.replace(/\D/g, "");
-                editRawRef.current = digits;
-                e.target.value = fmtCentavos(digits);
-              }}
-              onPaste={(e) => {
-                e.preventDefault();
-                const text = e.clipboardData.getData("text");
-                const cents = text.includes(",")
-                  ? Math.round((parseValor(text) ?? 0) * 100)
-                  : parseInt(text.replace(/\D/g, "") || "0", 10) || 0;
-                editRawRef.current = String(cents);
-                e.currentTarget.value = fmtCentavos(String(cents));
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") commitBatch();
-                else if (e.key === "Escape") clearSelection();
-              }}
-              onBlur={commitBatch}
-              style={styles.calInputEl}
-            />
+            editInput(cents)
           ) : (
             <span
               style={{
@@ -714,26 +720,34 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
       title: "Previsão de venda",
       dataIndex: "valorPrevistoCentavos",
       key: "valor",
-      render: (v: number, p) => (
-        <InputNumber
-          value={v / 100}
-          min={0}
-          decimalSeparator=","
-          prefix="R$"
-          controls={false}
-          placeholder="0,00"
-          onChange={(next) =>
-            setPrevisoes((prev) =>
-              prev.map((row) =>
-                row.data === p.data
-                  ? { ...row, valorPrevistoCentavos: Math.round((next ?? 0) * 100) }
-                  : row
-              )
-            )
-          }
-          style={{ width: "100%" }}
-        />
-      ),
+      // Paridade com o calendário: a coluna de valor é selecionável/editável e
+      // reusa o mesmo estado (seleção, lote por teclado, edição inline).
+      onCell: (p) => ({
+        onMouseDown: (e) => {
+          if ((e.target as HTMLElement).closest(".gt-cal-input")) return;
+          e.preventDefault();
+          beginSelect(p.data, e.shiftKey);
+        },
+        onMouseEnter: () => extendSelect(p.data),
+        onClick: (e) => e.stopPropagation(),
+        style: {
+          cursor: "pointer",
+          ...(selection.has(p.data) ? { background: "var(--ant-color-primary-bg)" } : null),
+        },
+      }),
+      render: (v: number, p) => {
+        if (editing && origin === p.data && selection.size === 1) return editInput(v);
+        return (
+          <span
+            style={{
+              fontVariantNumeric: "tabular-nums",
+              color: v === 0 ? "var(--ant-color-text-quaternary)" : "var(--ant-color-text)",
+            }}
+          >
+            {formatCurrency(v)}
+          </span>
+        );
+      },
     },
   ];
 
@@ -916,7 +930,7 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
         </div>
       </div>
 
-      <div style={styles.body}>
+      <div ref={bodyRef} style={styles.body}>
         {mode === "calendario" ? (
           <div className={`gt-cal-frame gt-cal-weeks-${weeksNeeded}`}>
             <div className="gt-cal-weekhead" aria-hidden>
