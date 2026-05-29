@@ -160,7 +160,7 @@ export function PdvPanel({ unidadeId, onOpenPdv, onImport }: PdvPanelProps) {
     {
       title: "Ações",
       key: "actions",
-      width: 100,
+      width: 92,
       render: (_, p) => (
         <Button type="link" style={{ height: 24, padding: 0 }} onClick={() => onOpenPdv(p.id)}>
           Gerenciar

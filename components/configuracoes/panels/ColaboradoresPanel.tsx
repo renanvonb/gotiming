@@ -171,7 +171,7 @@ export function ColaboradoresPanel({ unidadeId, onOpenColab, onImportFolgas }: C
     {
       title: "Ações",
       key: "actions",
-      width: 100,
+      width: 92,
       render: (_, c) => (
         <Button type="link" style={{ height: 24, padding: 0 }} onClick={() => onOpenColab(c.id)}>
           Gerenciar
