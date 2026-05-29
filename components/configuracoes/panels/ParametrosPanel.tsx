@@ -91,15 +91,18 @@ const styles: Record<string, CSSProperties> = {
   headCollapsed: {
     flexDirection: "column-reverse",
     padding: "16px 0",
-    gap: 12,
+    gap: 4,
     background: "transparent",
     borderBottom: 0,
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-end",
     flex: 1,
   },
   title: {
-    margin: 0,
+    marginTop: 0,
+    marginRight: 0,
+    marginBottom: 0,
+    marginLeft: 0,
     fontSize: 14,
     fontWeight: 600,
     color: "var(--ant-color-text)",
@@ -107,7 +110,10 @@ const styles: Record<string, CSSProperties> = {
   },
   titleCollapsed: {
     writingMode: "vertical-rl",
-    textAlign: "left",
+    textAlign: "center",
+    letterSpacing: "0.02em",
+    lineHeight: "normal",
+    marginTop: 4,
     flex: "none",
   },
   collapse: {
@@ -124,6 +130,9 @@ const styles: Record<string, CSSProperties> = {
       "background var(--ant-motion-duration-fast), transform var(--ant-motion-duration-mid) var(--ant-motion-ease-in-out)",
   },
   collapseCollapsed: {
+    width: 28,
+    height: 28,
+    padding: 0,
     transform: "rotate(180deg)",
   },
   body: {
@@ -925,7 +934,14 @@ function CollapseButton({ collapsed, onToggle }: { collapsed: boolean; onToggle:
 }
 
 function Section({ id, title, collapsed, dark, onToggle, children }: SectionProps) {
-  const headBg = collapsed ? "transparent" : dark ? "rgba(255, 255, 255, 0.04)" : "#fafafa";
+  const [hovered, handlers] = useHover();
+  const headBg = collapsed
+    ? hovered
+      ? "var(--ant-color-fill-quaternary)"
+      : "transparent"
+    : dark
+      ? "rgba(255, 255, 255, 0.04)"
+      : "#fafafa";
 
   return (
     <section
@@ -935,6 +951,7 @@ function Section({ id, title, collapsed, dark, onToggle, children }: SectionProp
         ...(collapsed ? styles.sectionCollapsed : null),
       }}
       onClick={collapsed ? onToggle : undefined}
+      {...(collapsed ? handlers : {})}
     >
       <header
         style={{

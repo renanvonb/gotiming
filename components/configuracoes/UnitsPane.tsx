@@ -72,7 +72,7 @@ const styles: Record<string, CSSProperties> = {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: 8,
+    gap: 4,
     padding: "16px 0",
     border: 0,
     background: "transparent",

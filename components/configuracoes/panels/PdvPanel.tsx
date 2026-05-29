@@ -214,7 +214,7 @@ export function PdvPanel({ unidadeId, onOpenPdv, onImport }: PdvPanelProps) {
           bordered
           rowClassName={(record) => (record.ativoParaEscala ? "" : "is-disabled")}
           locale={{
-            emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Nenhum PDV" />,
+            emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Nenhum PDV encontrado" />,
           }}
         />
       </div>

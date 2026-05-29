@@ -279,7 +279,7 @@ export function ListaEscalasContent() {
                               color: "var(--ant-color-text)",
                             }}
                           >
-                            Nenhuma escala gerada
+                            Nenhuma escala encontrada
                           </h4>
                           <span style={{ color: "var(--ant-color-text-tertiary)" }}>
                             Todas as escalas geradas serão listadas aqui.

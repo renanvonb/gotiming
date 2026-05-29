@@ -215,6 +215,20 @@ button {
 /* A última linha mantém sua borda inferior (separa as linhas da área vazia
    quando o corpo não está cheio); a moldura desenha a base do quadro. */
 
+/* Sem resultados: a tabela vazia preenche toda a área das linhas para o Empty
+   (placeholder com vertical-align: middle do AntD) ficar centralizado. Só com
+   placeholder presente (via :has), para não esticar as linhas reais. */
+.gt-table-frame .ant-table-body:has(.ant-table-placeholder) > table {
+  height: 100%;
+}
+/* O placeholder (sem resultados) não desenha bordas de célula — a moldura já
+   delimita a área. */
+.gt-table-frame .ant-table-placeholder > td,
+.gt-table-frame .ant-table-placeholder > .ant-table-cell {
+  border-block-end: 0 !important;
+  border-inline-end: 0 !important;
+}
+
 /* Calendário de previsões. A moldura (.gt-cal-frame) abriga um cabeçalho próprio
    de dias da semana (nomes completos, centralizados) e o <Calendar> do AntD,
    cujo cabeçalho nativo (abreviado) é escondido. As semanas dividem a altura

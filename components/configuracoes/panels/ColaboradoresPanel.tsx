@@ -111,7 +111,9 @@ export function ColaboradoresPanel({ unidadeId, onOpenColab, onImportFolgas }: C
       (c) =>
         c.nome.toLowerCase().includes(term) ||
         c.funcao.toLowerCase().includes(term) ||
-        String(c.codigoOperador).includes(term)
+        String(c.codigoOperador).includes(term) ||
+        fmtFolga(c.ultimaFolgaSemana).includes(term) ||
+        fmtFolga(c.ultimaFolgaDomingo).includes(term)
     );
   }, [colaboradores, search]);
 
@@ -148,13 +150,13 @@ export function ColaboradoresPanel({ unidadeId, onOpenColab, onImportFolgas }: C
       title: "Últ. folga semana",
       key: "folgaSemana",
       width: 150,
-      render: (_, c) => fmtFolga(c.ultimaFolgaSemana),
+      render: (_, c) => highlightMatch(fmtFolga(c.ultimaFolgaSemana), search),
     },
     {
       title: "Últ. folga domingo",
       key: "folgaDomingo",
       width: 156,
-      render: (_, c) => fmtFolga(c.ultimaFolgaDomingo),
+      render: (_, c) => highlightMatch(fmtFolga(c.ultimaFolgaDomingo), search),
     },
     {
       title: "Escala",
@@ -217,7 +219,7 @@ export function ColaboradoresPanel({ unidadeId, onOpenColab, onImportFolgas }: C
           rowClassName={(record) => (record.ativoParaEscala ? "" : "is-disabled")}
           locale={{
             emptyText: (
-              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Nenhum colaborador" />
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Nenhum colaborador encontrado" />
             ),
           }}
         />

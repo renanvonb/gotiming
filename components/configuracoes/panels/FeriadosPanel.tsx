@@ -118,7 +118,12 @@ export function FeriadosPanel({ unidadeId, onOpenFeriado, onImport }: FeriadosPa
           bordered
           scroll={{ y: scrollY }}
           locale={{
-            emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Nenhum feriado" />,
+            emptyText: (
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description="Nenhum feriado ou data especial encontrado"
+              />
+            ),
           }}
         />
       </div>
