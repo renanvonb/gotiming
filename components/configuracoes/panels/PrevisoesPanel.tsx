@@ -3,7 +3,6 @@
 import {
   Button,
   Calendar,
-  DatePicker,
   InputNumber,
   Popconfirm,
   Radio,
@@ -80,6 +79,53 @@ const styles: Record<string, CSSProperties> = {
     position: "relative",
     display: "inline-flex",
   },
+  mpDropdown: {
+    position: "absolute",
+    top: "calc(100% + 6px)",
+    left: 0,
+    zIndex: 30,
+    width: 240,
+    background: "var(--ant-color-bg-elevated)",
+    border: "1px solid var(--ant-color-border-secondary)",
+    borderRadius: 8,
+    boxShadow: "var(--ant-box-shadow-secondary)",
+    padding: 8,
+  },
+  mpHead: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 4,
+  },
+  mpYear: {
+    fontWeight: 600,
+    fontSize: 14,
+    color: "var(--ant-color-text)",
+  },
+  mpGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, 1fr)",
+    gap: 4,
+  },
+  mpMonth: {
+    padding: "8px 0",
+    textAlign: "center",
+    borderRadius: 6,
+    cursor: "pointer",
+    fontSize: 13,
+    border: 0,
+    background: "transparent",
+    color: "var(--ant-color-text)",
+  },
+  mpMonthActive: {
+    background: "var(--ant-color-primary)",
+    color: "#fff",
+    fontWeight: 500,
+  },
+  mpFooter: {
+    marginTop: 6,
+    textAlign: "center",
+  },
   hiddenPicker: {
     position: "absolute",
     left: 0,
@@ -110,9 +156,6 @@ const styles: Record<string, CSSProperties> = {
     transition: "background var(--ant-motion-duration-fast)",
   },
   calCellDim: {
-    backgroundColor: "var(--ant-color-fill-quaternary)",
-    backgroundImage:
-      "repeating-linear-gradient(135deg, transparent 0, transparent 5px, rgba(0,0,0,0.05) 5px, rgba(0,0,0,0.05) 6px)",
     cursor: "default",
   },
   calDay: {
@@ -196,6 +239,7 @@ function capitalize(s: string): string {
 }
 
 const WEEKDAYS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+const MONTHS_ABBR = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
 // Aceita valores em pt-BR ("1.234,56" / "1234,56") ou com ponto decimal ("1234.56").
 function parseValor(s: string): number | null {
@@ -204,6 +248,18 @@ function parseValor(s: string): number | null {
   if (str.includes(",")) str = str.replace(/\./g, "").replace(",", ".");
   const n = parseFloat(str);
   return Number.isNaN(n) ? null : n;
+}
+
+// Formata uma string de dígitos como moeda tratando os 2 últimos como centavos
+// ("150000" → "1.500,00"), sem o prefixo "R$". Opera sobre string para não
+// estourar a precisão de ponto flutuante em valores grandes. Vazio/zero → "".
+function fmtCentavos(digits: string): string {
+  const d = digits.replace(/\D/g, "").replace(/^0+(?=\d)/, "");
+  if (d === "" || d === "0") return "";
+  const padded = d.padStart(3, "0");
+  const intPart = padded.slice(0, -2).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  const centPart = padded.slice(-2);
+  return `${intPart},${centPart}`;
 }
 
 export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
@@ -216,20 +272,114 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
   const [selection, setSelection] = useState<Set<string>>(() => new Set());
   const [origin, setOrigin] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerYear, setPickerYear] = useState(() => dayjs().year());
+  const [loading, setLoading] = useState(false);
+  const [flashing, setFlashing] = useState(false);
   const draggingRef = useRef(false);
+  const movedRef = useRef(false);
   const originRef = useRef<string | null>(null);
   const editRawRef = useRef<string | null>(null);
+  const selectionRef = useRef<Set<string>>(selection);
+  const editingRef = useRef(false);
+  const byDateRef = useRef<Map<string, PrevisaoDia>>(new Map());
+  const multiBufferRef = useRef("");
+  const copyBufferRef = useRef<number | null>(null);
 
+  const storageKey = `gotime:forecast:${unidadeId}:${mes.format("YYYY-MM")}`;
+
+  // Carrega o mock e sobrepõe os valores persistidos (localStorage) por unidade+mês.
   useEffect(() => {
-    const list = getPrevisoes(unidadeId, mes.year(), mes.month());
+    let list = getPrevisoes(unidadeId, mes.year(), mes.month());
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) {
+        const saved = JSON.parse(raw) as Record<string, number>;
+        list = list.map((p) => {
+          const day = String(dayjs(p.data).date());
+          return saved[day] != null ? { ...p, valorPrevistoCentavos: saved[day] } : p;
+        });
+      }
+    } catch {
+      /* ignora JSON inválido */
+    }
     setPrevisoes(list);
-  }, [unidadeId, mes]);
+  }, [unidadeId, mes, storageKey]);
+
+  // Persiste (debounce 50ms) apenas os dias com valor > 0, por unidade+mês.
+  useEffect(() => {
+    if (previsoes.length === 0) return;
+    const id = window.setTimeout(() => {
+      const obj: Record<string, number> = {};
+      previsoes.forEach((p) => {
+        if (p.valorPrevistoCentavos > 0) obj[String(dayjs(p.data).date())] = p.valorPrevistoCentavos;
+      });
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(obj));
+      } catch {
+        /* storage indisponível */
+      }
+    }, 50);
+    return () => window.clearTimeout(id);
+  }, [previsoes, storageKey]);
+
+  // Salva também ao fechar/recarregar a página.
+  useEffect(() => {
+    const flush = () => {
+      const obj: Record<string, number> = {};
+      previsoes.forEach((p) => {
+        if (p.valorPrevistoCentavos > 0) obj[String(dayjs(p.data).date())] = p.valorPrevistoCentavos;
+      });
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(obj));
+      } catch {
+        /* storage indisponível */
+      }
+    };
+    window.addEventListener("beforeunload", flush);
+    return () => window.removeEventListener("beforeunload", flush);
+  }, [previsoes, storageKey]);
+
+  // Remove o tooltip nativo (title="YYYY-MM-DD") que o AntD coloca nas células;
+  // os tooltips ricos são renderizados por nós.
+  useEffect(() => {
+    if (mode !== "calendario") return;
+    document.querySelectorAll(".gt-cal-fill td[title]").forEach((el) => el.removeAttribute("title"));
+  });
 
   const byDate = useMemo(() => {
     const map = new Map<string, PrevisaoDia>();
     for (const p of previsoes) map.set(p.data, p);
     return map;
   }, [previsoes]);
+
+  // Refs espelham o estado para os listeners globais (mouseup/keydown) lerem
+  // sempre o valor atual sem reanexar.
+  useEffect(() => {
+    editingRef.current = editing;
+  }, [editing]);
+  useEffect(() => {
+    byDateRef.current = byDate;
+  }, [byDate]);
+
+  const fillSelected = (cents: number) => {
+    const sel = selectionRef.current;
+    setPrevisoes((prev) =>
+      prev.map((p) => (sel.has(p.data) ? { ...p, valorPrevistoCentavos: cents } : p))
+    );
+  };
+
+  const applyPaste = (cents: number) => {
+    let changed = 0;
+    selectionRef.current.forEach((k) => {
+      if ((byDateRef.current.get(k)?.valorPrevistoCentavos ?? 0) !== cents) changed++;
+    });
+    fillSelected(cents);
+    if (changed > 0) {
+      message.success(
+        `${changed} ${changed === 1 ? "previsão atualizada" : "previsões atualizadas"} com sucesso!`
+      );
+    }
+  };
 
   const total = useMemo(
     () => previsoes.reduce((sum, p) => sum + p.valorPrevistoCentavos, 0),
@@ -251,29 +401,59 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
     return keys;
   };
 
-  const beginSelect = (key: string, shift: boolean) => {
+  // Atualiza a seleção no estado E no ref ao mesmo tempo, para que os listeners
+  // globais (mouseup/keydown) leiam o valor atual sem depender do re-render —
+  // senão um clique rápido não abre a edição (mouseup roda antes do ref atualizar).
+  const setSel = (next: Set<string>) => {
+    selectionRef.current = next;
+    setSelection(next);
+  };
+
+  // Shift+Click: adiciona/remove a célula da seleção (não-contígua), mantendo ao
+  // menos uma. Se a origem sair, a próxima selecionada assume.
+  const toggleSelect = (key: string) => {
+    setEditing(false);
     editRawRef.current = null;
-    if (shift && originRef.current) {
-      setSelection(new Set(rangeKeys(originRef.current, key)));
-      setEditing(true);
+    multiBufferRef.current = "";
+    const next = new Set(selectionRef.current);
+    if (next.has(key)) {
+      if (next.size > 1) next.delete(key);
     } else {
-      originRef.current = key;
-      setOrigin(key);
-      setSelection(new Set([key]));
-      setEditing(false);
-      draggingRef.current = true;
+      next.add(key);
     }
+    if (!originRef.current || !next.has(originRef.current)) {
+      const first = next.values().next().value ?? null;
+      originRef.current = first;
+      setOrigin(first);
+    }
+    setSel(next);
+  };
+
+  const beginSelect = (key: string, shift: boolean) => {
+    if (shift) {
+      toggleSelect(key);
+      return;
+    }
+    editRawRef.current = null;
+    multiBufferRef.current = "";
+    originRef.current = key;
+    setOrigin(key);
+    setSel(new Set([key]));
+    setEditing(false);
+    draggingRef.current = true;
+    movedRef.current = false;
   };
 
   const extendSelect = (key: string) => {
     if (draggingRef.current && originRef.current) {
-      setSelection(new Set(rangeKeys(originRef.current, key)));
+      movedRef.current = true;
+      setSel(new Set(rangeKeys(originRef.current, key)));
     }
   };
 
   const clearSelection = () => {
     originRef.current = null;
-    setSelection(new Set());
+    setSel(new Set());
     setOrigin(null);
     setEditing(false);
     editRawRef.current = null;
@@ -283,16 +463,22 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
   // (só fecha o input) para que Shift possa estender a partir da origem; a
   // seleção é zerada só no Esc ou clique fora.
   const commitBatch = () => {
+    // editRawRef guarda a string de dígitos (centavos) digitada, ou null se não
+    // houve digitação (mantém os valores). String vazia → o dia foi apagado → 0.
     const raw = editRawRef.current;
-    // raw === null → não houve digitação (mantém os valores). String vazia →
-    // o usuário apagou o valor → vira 0 (placeholder "R$ 0,00").
     if (raw !== null && selection.size > 0) {
-      const trimmed = raw.trim();
-      const n = trimmed === "" ? 0 : parseValor(trimmed);
-      if (n != null) {
-        const cents = Math.round(n * 100);
+      const cents = parseInt(raw || "0", 10) || 0;
+      const changed = previsoes.filter(
+        (p) => selection.has(p.data) && p.valorPrevistoCentavos !== cents
+      ).length;
+      if (changed > 0) {
         setPrevisoes((prev) =>
           prev.map((p) => (selection.has(p.data) ? { ...p, valorPrevistoCentavos: cents } : p))
+        );
+        message.success(
+          selection.size === 1
+            ? "Previsão atualizada com sucesso!"
+            : `${selection.size} previsões atualizadas com sucesso!`
         );
       }
     }
@@ -300,13 +486,15 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
     editRawRef.current = null;
   };
 
-  // Encerra o arrasto ao soltar o mouse (em qualquer lugar) e abre a edição na origem.
+  // Solta o mouse: clique simples (1 célula, sem arrasto) → edição inline;
+  // arrasto que selecionou 2+ dias → sessão de digitação em lote (sem input).
   useEffect(() => {
     const onUp = () => {
-      if (draggingRef.current) {
-        draggingRef.current = false;
-        setEditing(true);
-      }
+      if (!draggingRef.current) return;
+      draggingRef.current = false;
+      if (selectionRef.current.size === 1) setEditing(true);
+      else multiBufferRef.current = "";
+      movedRef.current = false;
     };
     document.addEventListener("mouseup", onUp);
     return () => document.removeEventListener("mouseup", onUp);
@@ -322,6 +510,75 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
     return () => document.removeEventListener("mousedown", onDown);
   }, []);
 
+  // Teclado em multi-seleção (sem input): digitar preenche todas ao vivo (centavos),
+  // Backspace remove dígito, Delete zera, Enter confirma, Esc encerra. Ctrl+C copia
+  // o valor da origem; Ctrl+V cola priorizando origem > buffer > clipboard.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (editingRef.current) return;
+      const sel = selectionRef.current;
+      if (sel.size === 0) return;
+      const tag = (document.activeElement?.tagName ?? "").toLowerCase();
+      if (tag === "input" || tag === "textarea") return;
+      const mod = e.ctrlKey || e.metaKey;
+
+      if (mod && e.key.toLowerCase() === "c") {
+        e.preventDefault();
+        const cents = byDateRef.current.get(originRef.current ?? "")?.valorPrevistoCentavos ?? 0;
+        copyBufferRef.current = cents;
+        navigator.clipboard?.writeText?.(formatCurrency(cents)).catch(() => {});
+        message.success(`Valor copiado: ${formatCurrency(cents)}`);
+        return;
+      }
+      if (mod && e.key.toLowerCase() === "v") {
+        e.preventDefault();
+        const originCents = byDateRef.current.get(originRef.current ?? "")?.valorPrevistoCentavos ?? 0;
+        if (originCents > 0) applyPaste(originCents);
+        else if (copyBufferRef.current != null) applyPaste(copyBufferRef.current);
+        else
+          navigator.clipboard
+            ?.readText?.()
+            .then((txt) => {
+              const c = txt.includes(",")
+                ? Math.round((parseValor(txt) ?? 0) * 100)
+                : parseInt(txt.replace(/\D/g, "") || "0", 10) || 0;
+              applyPaste(c);
+            })
+            .catch(() => {});
+        return;
+      }
+
+      if (sel.size < 2) return;
+      if (/^\d$/.test(e.key)) {
+        e.preventDefault();
+        if (multiBufferRef.current.length < 12) multiBufferRef.current += e.key;
+        fillSelected(parseInt(multiBufferRef.current || "0", 10) || 0);
+      } else if (e.key === "Backspace") {
+        e.preventDefault();
+        multiBufferRef.current = multiBufferRef.current.slice(0, -1);
+        fillSelected(parseInt(multiBufferRef.current || "0", 10) || 0);
+      } else if (e.key === "Delete") {
+        e.preventDefault();
+        fillSelected(0);
+        message.success(`${sel.size} previsões limpas com sucesso!`);
+        multiBufferRef.current = "";
+        clearSelection();
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        if (multiBufferRef.current !== "")
+          message.success(`${sel.size} previsões atualizadas com sucesso!`);
+        multiBufferRef.current = "";
+        clearSelection();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        multiBufferRef.current = "";
+        clearSelection();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
   const renderCell = (date: Dayjs) => {
     const inMonth = date.month() === mes.month() && date.year() === mes.year();
     const key = date.format("YYYY-MM-DD");
@@ -331,21 +588,25 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
     const empty = cents === 0;
     const selected = selection.has(key);
     const isOrigin = origin === key;
-    const showInput = editing && isOrigin;
+    const showInput = editing && isOrigin && selection.size === 1;
 
     const shadows: string[] = [];
     if (showInput) shadows.push("inset 0 -2px 0 0 var(--ant-color-primary)");
     else if (isOrigin && selection.size > 1) shadows.push("inset 0 0 0 2px var(--ant-color-primary)");
     if (isToday && inMonth && !selected) shadows.push("inset 0 2px 0 0 var(--ant-color-primary)");
 
-    return (
+    const cellEl = (
       <div
         className="gt-cal-cell"
         style={{
           ...styles.calCell,
           ...(inMonth ? null : styles.calCellDim),
           cursor: inMonth ? "pointer" : "default",
-          background: selected ? "var(--ant-color-primary-bg)" : undefined,
+          backgroundColor: selected
+            ? "var(--ant-color-primary-bg)"
+            : inMonth
+            ? undefined
+            : "var(--ant-color-fill-quaternary)",
           boxShadow: shadows.length ? shadows.join(", ") : undefined,
           zIndex: selected || isOrigin ? 1 : undefined,
         }}
@@ -364,6 +625,11 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
         }
         onMouseEnter={inMonth ? () => extendSelect(key) : undefined}
         onClick={(e) => e.stopPropagation()}
+        title={
+          inMonth && !selected && !showInput
+            ? `${capitalize(date.format("dddd, DD [de] MMMM [de] YYYY"))} — ${formatCurrency(cents)}`
+            : undefined
+        }
       >
         <span
           style={{
@@ -379,11 +645,31 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
             <input
               className="gt-cal-input"
               autoFocus
-              defaultValue={empty ? "" : (cents / 100).toFixed(2).replace(".", ",")}
-              inputMode="decimal"
+              defaultValue={empty ? "" : fmtCentavos(String(cents))}
+              inputMode="numeric"
               onMouseDown={(e) => e.stopPropagation()}
+              onFocus={(e) => {
+                editRawRef.current = e.target.value.replace(/\D/g, "");
+                const len = e.target.value.length;
+                e.target.setSelectionRange(len, len);
+              }}
+              onBeforeInput={(e) => {
+                const data = (e.nativeEvent as InputEvent).data;
+                if (data && /\D/.test(data)) e.preventDefault();
+              }}
               onChange={(e) => {
-                editRawRef.current = e.target.value;
+                const digits = e.target.value.replace(/\D/g, "");
+                editRawRef.current = digits;
+                e.target.value = fmtCentavos(digits);
+              }}
+              onPaste={(e) => {
+                e.preventDefault();
+                const text = e.clipboardData.getData("text");
+                const cents = text.includes(",")
+                  ? Math.round((parseValor(text) ?? 0) * 100)
+                  : parseInt(text.replace(/\D/g, "") || "0", 10) || 0;
+                editRawRef.current = String(cents);
+                e.currentTarget.value = fmtCentavos(String(cents));
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter") commitBatch();
@@ -393,12 +679,20 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
               style={styles.calInputEl}
             />
           ) : (
-            <span style={{ ...styles.calValue, ...(empty ? styles.calValuePlaceholder : null) }}>
+            <span
+              style={{
+                ...styles.calValue,
+                ...(empty ? styles.calValuePlaceholder : null),
+                ...(flashing && !empty ? { animation: "gtCalFlash 700ms ease" } : null),
+              }}
+            >
               {formatCurrency(cents)}
             </span>
           ))}
       </div>
     );
+
+    return cellEl;
   };
 
   const columns: TableColumnsType<PrevisaoDia> = [
@@ -445,10 +739,59 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
 
   const handleClear = () => {
     setPrevisoes((prev) => prev.map((p) => ({ ...p, valorPrevistoCentavos: 0 })));
-    message.success("Previsões do mês limpas");
+    message.success("Previsões do mês foram limpas");
   };
 
+  // Troca de mês com skeleton de 500ms.
+  const goMonth = (next: Dayjs) => {
+    clearSelection();
+    setLoading(true);
+    setMes(next);
+    window.setTimeout(() => setLoading(false), 500);
+  };
+
+  // Troca de visualização com skeleton de 400ms.
+  const changeMode = (m: ViewMode) => {
+    if (m === mode) return;
+    clearSelection();
+    setLoading(true);
+    setMode(m);
+    window.setTimeout(() => setLoading(false), 400);
+  };
+
+  // Preenchimento inteligente (mock): toast de loading 2s, preenche o mês com
+  // valores aleatórios entre R$ 100.000 e R$ 500.000 e dispara o flash verde.
+  const handleAiFill = () => {
+    const hide = message.loading("Analisando dados históricos…", 0);
+    window.setTimeout(() => {
+      hide();
+      setPrevisoes((prev) =>
+        prev.map((p) => ({
+          ...p,
+          valorPrevistoCentavos:
+            (100000 + Math.floor(Math.random() * 400001)) * 100 + Math.floor(Math.random() * 100),
+        }))
+      );
+      setFlashing(true);
+      window.setTimeout(() => setFlashing(false), 750);
+      message.success("Previsões preenchidas automaticamente para o mês");
+    }, 2000);
+  };
+
+  // Fecha o month picker ao clicar fora.
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (!(e.target as HTMLElement)?.closest(".gt-mp-anchor")) setPickerOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [pickerOpen]);
+
   const monthLabel = capitalize(mes.format("MMMM [de] YYYY"));
+  // Quantas semanas o mês ocupa (4, 5 ou 6). Linhas finais só com dias de outro
+  // mês são escondidas via CSS para não sobrar uma faixa vazia embaixo.
+  const weeksNeeded = Math.ceil((mes.startOf("month").day() + mes.daysInMonth()) / 7);
 
   return (
     <div style={{ ...styles.forecast, padding: 16 }}>
@@ -456,34 +799,75 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
         <div style={styles.toolbarLeft}>
           <Radio.Group
             value={mode}
-            onChange={(e) => setMode(e.target.value as ViewMode)}
+            onChange={(e) => changeMode(e.target.value as ViewMode)}
             optionType="button"
             options={[
               { label: "Calendário", value: "calendario" },
               { label: "Tabela", value: "tabela" },
             ]}
           />
-          <span style={styles.monthPickerAnchor}>
+          <span style={styles.monthPickerAnchor} className="gt-mp-anchor">
             <Tooltip title="Selecionar mês e ano">
               <Button
                 icon={<CalendarIcon />}
                 aria-label="Selecionar mês e ano"
-                onClick={() => setPickerOpen(true)}
+                onClick={() => {
+                  setPickerYear(mes.year());
+                  setPickerOpen((o) => !o);
+                }}
               />
             </Tooltip>
-            <DatePicker
-              picker="month"
-              value={mes}
-              open={pickerOpen}
-              onOpenChange={setPickerOpen}
-              onChange={(d) => {
-                if (d) setMes(d);
-                setPickerOpen(false);
-              }}
-              allowClear={false}
-              inputReadOnly
-              style={styles.hiddenPicker}
-            />
+            {pickerOpen && (
+              <div style={styles.mpDropdown}>
+                <div style={styles.mpHead}>
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<ChevronLeftIcon />}
+                    aria-label="Ano anterior"
+                    onClick={() => setPickerYear((y) => y - 1)}
+                  />
+                  <span style={styles.mpYear}>{pickerYear}</span>
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<ChevronRightIcon />}
+                    aria-label="Próximo ano"
+                    onClick={() => setPickerYear((y) => y + 1)}
+                  />
+                </div>
+                <div style={styles.mpGrid}>
+                  {MONTHS_ABBR.map((m, i) => {
+                    const active = mes.year() === pickerYear && mes.month() === i;
+                    return (
+                      <button
+                        key={m}
+                        type="button"
+                        style={{ ...styles.mpMonth, ...(active ? styles.mpMonthActive : null) }}
+                        onClick={() => {
+                          goMonth(dayjs(new Date(pickerYear, i, 1)));
+                          setPickerOpen(false);
+                        }}
+                      >
+                        {m}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div style={styles.mpFooter}>
+                  <Button
+                    type="link"
+                    size="small"
+                    onClick={() => {
+                      goMonth(dayjs().date(1));
+                      setPickerOpen(false);
+                    }}
+                  >
+                    Mês atual
+                  </Button>
+                </div>
+              </div>
+            )}
           </span>
         </div>
         <div style={styles.month}>
@@ -491,24 +875,29 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
             type="text"
             icon={<ChevronLeftIcon />}
             aria-label="Mês anterior"
-            onClick={() => setMes((m) => m.subtract(1, "month"))}
+            onClick={() => goMonth(mes.subtract(1, "month"))}
           />
           <span style={styles.monthLabel}>{monthLabel}</span>
           <Button
             type="text"
             icon={<ChevronRightIcon />}
             aria-label="Próximo mês"
-            onClick={() => setMes((m) => m.add(1, "month"))}
+            onClick={() => goMonth(mes.add(1, "month"))}
           />
         </div>
         <div style={styles.toolbarRight}>
-          <Tooltip title="Preenchimento inteligente">
-            <Button
-              icon={<WandIcon />}
-              aria-label="Preenchimento inteligente"
-              onClick={() => message.info("Preenchimento inteligente em breve")}
-            />
-          </Tooltip>
+          <Popconfirm
+            title="Preenchimento inteligente"
+            description="Esta ação irá substituir os valores previstos para todos os dias do mês. Deseja continuar?"
+            okText="Confirmar"
+            cancelText="Cancelar"
+            placement="bottomRight"
+            onConfirm={handleAiFill}
+          >
+            <Tooltip title="Preenchimento inteligente">
+              <Button icon={<WandIcon />} aria-label="Preenchimento inteligente" />
+            </Tooltip>
+          </Popconfirm>
           <Popconfirm
             title="Limpar previsões do mês"
             description="Essa ação zera todos os valores previstos deste mês."
@@ -529,7 +918,7 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
 
       <div style={styles.body}>
         {mode === "calendario" ? (
-          <div className="gt-cal-frame">
+          <div className={`gt-cal-frame gt-cal-weeks-${weeksNeeded}`}>
             <div className="gt-cal-weekhead" aria-hidden>
               {WEEKDAYS.map((d) => (
                 <div key={d} className="gt-cal-weekhead__cell">
@@ -537,15 +926,23 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
                 </div>
               ))}
             </div>
-            <Calendar
-              className="gt-cal-fill"
-              value={mes}
-              fullscreen
-              fullCellRender={(date, info) =>
-                info.type === "date" ? renderCell(date as Dayjs) : info.originNode
-              }
-              headerRender={() => null}
-            />
+            {loading ? (
+              <div className="gt-cal-skel" aria-hidden>
+                {Array.from({ length: 42 }).map((_, i) => (
+                  <div key={i} className="gt-cal-skel__cell" />
+                ))}
+              </div>
+            ) : (
+              <Calendar
+                className="gt-cal-fill"
+                value={mes}
+                fullscreen
+                fullCellRender={(date, info) =>
+                  info.type === "date" ? renderCell(date as Dayjs) : info.originNode
+                }
+                headerRender={() => null}
+              />
+            )}
           </div>
         ) : (
           <div ref={tableScrollRef} className="gt-table-frame" style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
@@ -556,6 +953,7 @@ export function PrevisoesPanel({ unidadeId, onImport }: PrevisoesPanelProps) {
               pagination={false}
               size="middle"
               bordered
+              loading={loading}
               scroll={{ y: scrollY }}
               locale={{
                 emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Sem previsões" />,
