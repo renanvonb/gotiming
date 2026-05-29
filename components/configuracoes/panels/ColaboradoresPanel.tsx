@@ -128,10 +128,10 @@ export function ColaboradoresPanel({ unidadeId, onOpenColab, onImportFolgas }: C
       ),
     },
     {
-      title: "Código operador",
+      title: "Cód. operador",
       dataIndex: "codigoOperador",
       key: "codigo",
-      width: 140,
+      width: 120,
       render: (value: number) => highlightMatch(String(value), search),
     },
     {
@@ -142,15 +142,15 @@ export function ColaboradoresPanel({ unidadeId, onOpenColab, onImportFolgas }: C
       render: (funcao: string) => highlightMatch(funcao, search),
     },
     {
-      title: "Última folga semana",
+      title: "Últ. folga semana",
       key: "folgaSemana",
-      width: 170,
+      width: 140,
       render: (_, c) => fmtFolga(c.ultimaFolgaSemana),
     },
     {
-      title: "Última folga domingo",
+      title: "Últ. folga domingo",
       key: "folgaDomingo",
-      width: 180,
+      width: 140,
       render: (_, c) => fmtFolga(c.ultimaFolgaDomingo),
     },
     {
