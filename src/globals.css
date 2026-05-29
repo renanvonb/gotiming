@@ -456,6 +456,13 @@ button {
   visibility: hidden;
 }
 
+/* Overlays (modais/drawers de formulário): o corpo mantém o padding de 24px do
+   AntD e o gap entre os campos passa a 16px (o padrão do AntD é 24px). */
+.ant-drawer .ant-form-item,
+.ant-modal .ant-form-item {
+  margin-bottom: 16px;
+}
+
 /* SideMenu: título alinhado ao início (flex:1) e botão de fechar à direita,
    conforme o protótipo (o padrão do AntD coloca o "X" à esquerda do título). */
 .gt-sidemenu .ant-drawer-header-title {

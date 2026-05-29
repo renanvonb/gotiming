@@ -106,7 +106,7 @@ export function PdvDrawer({ open, pdvId, unidadeId, onClose }: PdvDrawerProps) {
           type="info"
           showIcon
           title="Certifique-se de que o código interno do PDV seja igual ao ERP."
-          style={{ marginBottom: 24 }}
+          style={{ marginBottom: 16 }}
         />
         <div style={{ display: "flex", gap: 12 }}>
           <Form.Item label="Tipo" name="tipo" rules={[{ required: true }]} style={{ flex: 1 }}>
