@@ -107,21 +107,21 @@ export function PdvPanel({ unidadeId, onOpenPdv, onImport }: PdvPanelProps) {
       title: "Posição",
       dataIndex: "posicao",
       key: "posicao",
-      width: 110,
+      ellipsis: true,
       render: (value: number) => highlightMatch(fmtPosicao(value), search),
     },
     {
       title: "Código interno",
       dataIndex: "codigoInterno",
       key: "codigo",
-      width: 150,
+      ellipsis: true,
       render: (codigo: string) => highlightMatch(codigo, search),
     },
     {
       title: "Tipo",
       dataIndex: "tipo",
       key: "tipo",
-      width: 150,
+      ellipsis: true,
       render: (tipo: Pdv["tipo"]) => (
         <Tag color={TAG_COLOR_BY_TIPO[tipo]} variant="filled">
           {tipo}
@@ -132,7 +132,7 @@ export function PdvPanel({ unidadeId, onOpenPdv, onImport }: PdvPanelProps) {
       title: "Ordem de abertura",
       dataIndex: "ordemAbertura",
       key: "ordem",
-      width: 170,
+      ellipsis: true,
       render: (value: number) => `${value}º`,
     },
     {

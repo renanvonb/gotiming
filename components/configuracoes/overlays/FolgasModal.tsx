@@ -26,6 +26,7 @@ export function FolgasModal({ open, onClose }: FolgasModalProps) {
   return (
     <Modal
       title="Importar folgas"
+      centered
       open={open}
       onCancel={handleClose}
       destroyOnHidden

@@ -41,13 +41,6 @@ const styles: Record<string, CSSProperties> = {
     alignItems: "center",
     padding: 16,
   },
-  paneHeadCollapsed: {
-    flexDirection: "column-reverse",
-    padding: 0,
-    gap: 12,
-    alignItems: "center",
-    flex: "none",
-  },
   title: {
     margin: 0,
     flex: 1,
@@ -55,11 +48,6 @@ const styles: Record<string, CSSProperties> = {
     fontWeight: 600,
     lineHeight: "24px",
     color: "var(--ant-color-text)",
-  },
-  titleCollapsed: {
-    flex: "none",
-    writingMode: "vertical-rl",
-    textAlign: "left",
   },
   collapseBase: {
     width: 24,
@@ -75,14 +63,41 @@ const styles: Record<string, CSSProperties> = {
     transition:
       "background var(--ant-motion-duration-fast), color var(--ant-motion-duration-fast)",
   },
-  expand: {
-    display: "block",
-    background: "transparent",
+  /* Estado recolhido (rail de 56px): o bloco inteiro é clicável; o ícone fica
+     no topo respeitando o padding superior (16px, igual ao cabeçalho expandido)
+     e o título vertical "Unidades" vem logo abaixo. */
+  rail: {
+    flex: 1,
+    width: "100%",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 8,
+    padding: "16px 0",
     border: 0,
-    padding: 8,
+    background: "transparent",
     color: "var(--ant-color-text-secondary)",
     cursor: "pointer",
-    margin: "0 auto",
+    transition: "background var(--ant-motion-duration-fast)",
+  },
+  railIcon: {
+    width: 28,
+    height: 28,
+    flex: "none",
+    display: "grid",
+    placeItems: "center",
+    borderRadius: 4,
+    color: "var(--ant-color-text-secondary)",
+  },
+  railTitle: {
+    margin: 0,
+    marginTop: 4,
+    writingMode: "vertical-rl",
+    fontSize: 14,
+    fontWeight: 600,
+    letterSpacing: "0.02em",
+    whiteSpace: "nowrap",
+    color: "var(--ant-color-text)",
   },
   search: {
     padding: "0 16px 12px",
@@ -133,6 +148,27 @@ function CollapseButton({ onClick }: { onClick: () => void }) {
         <CircleChevronLeftIcon size={18} />
       </button>
     </Tooltip>
+  );
+}
+
+function CollapsedRail({ onClick }: { onClick: () => void }) {
+  const [hovered, handlers] = useHover();
+  return (
+    <button
+      type="button"
+      aria-label="Expandir unidades"
+      onClick={onClick}
+      style={{
+        ...styles.rail,
+        ...(hovered ? { background: "var(--ant-color-fill-quaternary)" } : null),
+      }}
+      {...handlers}
+    >
+      <span style={styles.railIcon}>
+        <CircleChevronLeftIcon size={18} style={{ transform: "rotate(180deg)" }} />
+      </span>
+      <span style={styles.railTitle}>Unidades</span>
+    </button>
   );
 }
 
@@ -214,34 +250,15 @@ export function UnitsPane({
 
   return (
     <section style={styles.block}>
-      <div
-        style={{
-          ...styles.paneHead,
-          ...(colapsada ? styles.paneHeadCollapsed : null),
-        }}
-      >
-        <span
-          style={{
-            ...styles.title,
-            ...(colapsada ? styles.titleCollapsed : null),
-          }}
-        >
-          Unidades
-        </span>
-        {!colapsada && <CollapseButton onClick={onToggleColapsada} />}
-      </div>
-
       {colapsada ? (
-        <button
-          type="button"
-          aria-label="Expandir unidades"
-          onClick={onToggleColapsada}
-          style={styles.expand}
-        >
-          <CircleChevronLeftIcon size={18} style={{ transform: "rotate(180deg)" }} />
-        </button>
+        <CollapsedRail onClick={onToggleColapsada} />
       ) : (
         <>
+          <div style={styles.paneHead}>
+            <span style={styles.title}>Unidades</span>
+            <CollapseButton onClick={onToggleColapsada} />
+          </div>
+
           <div style={styles.search}>
             <Input
               size="middle"

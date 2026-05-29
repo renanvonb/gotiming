@@ -26,6 +26,7 @@ export function ImportPdvModal({ open, onClose }: ImportPdvModalProps) {
   return (
     <Modal
       title="Importar PDV"
+      centered
       open={open}
       onCancel={handleClose}
       destroyOnHidden

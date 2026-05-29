@@ -26,6 +26,7 @@ export function PrevisoesImportModal({ open, onClose }: PrevisoesImportModalProp
   return (
     <Modal
       title="Importar previsões"
+      centered
       open={open}
       onCancel={handleClose}
       destroyOnHidden

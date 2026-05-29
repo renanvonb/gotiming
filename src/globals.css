@@ -33,15 +33,15 @@
   --gt-row-h: 64px;
   --gt-footer-h: 44px;
 
-  --gt-avatar-bg-red: #fff1f0;
-  --gt-avatar-bg-orange: #fff7e6;
-  --gt-avatar-bg-gold: #fffbe6;
-  --gt-avatar-bg-green: #f6ffed;
-  --gt-avatar-bg-cyan: #e6fffb;
-  --gt-avatar-bg-blue: #e6f4ff;
-  --gt-avatar-bg-purple: #f9f0ff;
-  --gt-avatar-bg-magenta: #fff0f6;
-  --gt-avatar-bg-gray: #f5f5f5;
+  --gt-avatar-bg-red: #ffccc7;
+  --gt-avatar-bg-orange: #fde4cf;
+  --gt-avatar-bg-gold: #fff1b8;
+  --gt-avatar-bg-green: #d9f7be;
+  --gt-avatar-bg-cyan: #b5f5ec;
+  --gt-avatar-bg-blue: #bae0ff;
+  --gt-avatar-bg-purple: #f4dafe;
+  --gt-avatar-bg-magenta: #ffd6e7;
+  --gt-avatar-bg-gray: #e0e0e0;
 }
 
 [data-theme="dark"] {
@@ -179,7 +179,16 @@ button {
 .gt-table-frame .ant-table-header {
   flex: 0 0 auto;
 }
-.gt-table-frame .ant-table {
+/* Zera o arredondamento que o AntD aplica nas tabelas internas (borderRadiusLG
+   = 8px no <table>, no cabeçalho e nas células de canto do thead). Sem isto, os
+   cantos de 8px destoam da moldura de 2px (overflow:hidden) e parecem uma borda
+   externa com arredondamento diferente do da tabela. */
+.gt-table-frame .ant-table,
+.gt-table-frame .ant-table-header,
+.gt-table-frame .ant-table-body,
+.gt-table-frame table,
+.gt-table-frame .ant-table-thead > tr > th:first-child,
+.gt-table-frame .ant-table-thead > tr > th:last-child {
   border-radius: 0 !important;
 }
 .gt-table-frame .ant-table-container {
@@ -196,11 +205,80 @@ button {
 .gt-table-frame .ant-table-tbody > tr > td:last-child {
   border-inline-end: 0 !important;
 }
-/* A base do quadro é desenhada uma única vez pela moldura; remover a borda
-   inferior da última linha evita a linha duplicada que aparecia acima do
-   espaço vazio quando o corpo não estava cheio. */
-.gt-table-frame .ant-table-tbody > tr:last-child > td {
-  border-block-end: 0 !important;
+/* A última linha mantém sua borda inferior (separa as linhas da área vazia
+   quando o corpo não está cheio); a moldura desenha a base do quadro. */
+
+/* Calendário de previsões. A moldura (.gt-cal-frame) abriga um cabeçalho próprio
+   de dias da semana (nomes completos, centralizados) e o <Calendar> do AntD,
+   cujo cabeçalho nativo (abreviado) é escondido. As semanas dividem a altura
+   igualmente; usamos height:100% encadeado com !important porque o AntD injeta
+   suas regras .ant-picker-* depois, com a mesma especificidade. */
+.gt-cal-frame {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.gt-cal-weekhead {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+.gt-cal-weekhead__cell {
+  padding: 8px 12px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ant-color-text-secondary);
+}
+.gt-cal-fill {
+  flex: 1;
+  min-height: 0;
+}
+.gt-cal-fill.ant-picker-calendar-full .ant-picker-panel,
+.gt-cal-fill .ant-picker-date-panel,
+.gt-cal-fill .ant-picker-body,
+.gt-cal-fill .ant-picker-content {
+  height: 100% !important;
+}
+/* Colunas iguais e cabeçalho nativo escondido (usamos o .gt-cal-weekhead). */
+.gt-cal-fill .ant-picker-content {
+  table-layout: fixed;
+}
+/* Remove o respiro vertical (padding 8px) que o AntD coloca no corpo, colando a
+   grade ao cabeçalho e à base da moldura. */
+.gt-cal-fill .ant-picker-body {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+.gt-cal-fill thead {
+  display: none;
+}
+/* Célula custom (fullCellRender) preenche a célula do AntD: zera padding e os
+   realces padrão, e desenha a grade (linhas internas) — a moldura cobre as
+   bordas externas. */
+.gt-cal-fill .ant-picker-cell {
+  padding: 0 !important;
+  border-top: 1px solid var(--ant-color-border-secondary);
+  border-inline-start: 1px solid var(--ant-color-border-secondary);
+}
+.gt-cal-fill .ant-picker-content tbody tr:first-child > .ant-picker-cell {
+  border-top: 0;
+}
+.gt-cal-fill .ant-picker-content tbody tr > .ant-picker-cell:first-child {
+  border-inline-start: 0;
+}
+.gt-cal-fill .ant-picker-cell::before {
+  display: none !important;
+}
+.gt-cal-cell {
+  background: var(--ant-color-bg-container);
+}
+.gt-cal-cell:hover {
+  background: var(--ant-color-fill-tertiary);
 }
 
 /* SideMenu: título alinhado ao início (flex:1) e botão de fechar à direita,

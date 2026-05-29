@@ -66,7 +66,7 @@ export function FeriadosPanel({ unidadeId, onOpenFeriado, onImport }: FeriadosPa
       title: "Data",
       dataIndex: "data",
       key: "data",
-      width: 150,
+      ellipsis: true,
       render: (d: string) => dayjs(d).format("DD/MM/YY"),
     },
     {
@@ -78,7 +78,7 @@ export function FeriadosPanel({ unidadeId, onOpenFeriado, onImport }: FeriadosPa
     {
       title: "Ações",
       key: "actions",
-      width: 100,
+      ellipsis: true,
       render: (_, f) => (
         <Button type="link" style={{ height: 24, padding: 0 }} onClick={() => onOpenFeriado(f.id)}>
           Gerenciar

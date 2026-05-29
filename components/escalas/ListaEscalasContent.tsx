@@ -297,6 +297,7 @@ export function ListaEscalasContent() {
 
       <Modal
         title="Nova escala"
+        centered
         open={modalOpen}
         width={440}
         okText="Criar escala"

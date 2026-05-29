@@ -95,8 +95,8 @@ const styles: Record<string, CSSProperties> = {
     background: "transparent",
     borderBottom: 0,
     alignItems: "center",
-    justifyContent: "flex-start",
-    flex: "none",
+    justifyContent: "center",
+    flex: 1,
   },
   title: {
     margin: 0,
